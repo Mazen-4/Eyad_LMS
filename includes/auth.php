@@ -22,6 +22,14 @@ function requireLogin($allowedRoles = []) {
         exit;
     }
 
+    if (($user['role'] ?? '') === 'student' && empty($user['group_id']) && !empty($user['id'])) {
+        $freshUser = dbFetchOne('SELECT id, name, username, role, group_id FROM users WHERE id = ? LIMIT 1', [(int)$user['id']]);
+        if ($freshUser) {
+            setLoggedInUser($freshUser);
+            $user = currentUser();
+        }
+    }
+
     return $user;
 }
 
@@ -42,10 +50,11 @@ function authenticateUser($username, $password) {
 
 function setLoggedInUser($user) {
     $_SESSION['user'] = [
-        'id' => $user['id'],
-        'name' => $user['name'],
-        'username' => $user['username'],
-        'role' => $user['role'],
+        'id' => (int)($user['id'] ?? 0),
+        'name' => $user['name'] ?? '',
+        'username' => $user['username'] ?? '',
+        'role' => $user['role'] ?? '',
+        'group_id' => isset($user['group_id']) ? (int)$user['group_id'] : null,
     ];
 }
 

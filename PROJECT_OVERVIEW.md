@@ -100,6 +100,12 @@ Optional:
 
 Students only see the content assigned to their group.
 
+### Mobile Experience
+
+The student portal must support mobile view as a first-class requirement.
+The experience should remain clean, readable, and fully usable on phones and tablets.
+Navigation, content cards, forms, and quiz screens should be optimized for smaller screens.
+
 ---
 
 ## Admin Panel

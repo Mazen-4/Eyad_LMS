@@ -11,6 +11,11 @@ The project is built by adapting the VenturePoint full-stack platform into an ed
 
 The system follows a modular architecture so future educational websites can be built on top of it with minimal modifications.
 
+### Mobile-first requirement
+
+The student portal must support mobile view as a core requirement.
+The interface should be responsive and optimized for phones and tablets, especially for lectures, resources, and quizzes.
+
 ---
 
 # Technology
