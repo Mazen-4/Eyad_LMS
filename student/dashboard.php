@@ -46,6 +46,19 @@ $user = requireLogin(['student']);
                 </div>
             </div>
         </div>
+
+        <div class="row g-3 mt-1">
+            <div class="col-12 col-md-6">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">More Information</h5>
+                        <p class="card-text">Open the public About and Contact pages from here.</p>
+                        <a href="../public/about.php" class="btn btn-outline-secondary btn-sm me-2">About</a>
+                        <a href="../public/contact.php" class="btn btn-outline-secondary btn-sm">Contact</a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </body>
 </html>

@@ -6,6 +6,36 @@ $conn = getDbConnection();
 
 $studentGroupId = (int)($user['group_id'] ?? 0);
 
+function normalizeDriveLink($value)
+{
+    $value = trim((string)$value);
+    if ($value === '') {
+        return '';
+    }
+
+    if (preg_match('#^https?://#i', $value)) {
+        if (preg_match('#/folders/([^/?#]+)#i', $value, $matches)) {
+            return 'https://drive.google.com/drive/folders/' . $matches[1];
+        }
+
+        if (preg_match('#/file/d/([^/?#]+)#i', $value, $matches)) {
+            return 'https://drive.google.com/file/d/' . $matches[1] . '/view?usp=sharing';
+        }
+
+        if (preg_match('#[?&]id=([^&#]+)#i', $value, $matches)) {
+            return 'https://drive.google.com/drive/folders/' . $matches[1];
+        }
+
+        return $value;
+    }
+
+    if (preg_match('/^[a-zA-Z0-9\-_]+$/', $value)) {
+        return 'https://drive.google.com/drive/folders/' . $value;
+    }
+
+    return $value;
+}
+
 if ($studentGroupId > 0) {
     $lecturesResult = $conn->prepare('SELECT l.id, l.title, l.description, l.drive_folder_id, l.display_order FROM lectures l INNER JOIN lecture_folder_access lfa ON lfa.lecture_id = l.id WHERE l.status = "active" AND lfa.group_id = ? ORDER BY l.display_order, l.id');
     $lecturesResult->bind_param('i', $studentGroupId);
@@ -39,7 +69,7 @@ if ($studentGroupId > 0) {
                                 <h5 class="card-title"><?php echo htmlspecialchars($lecture['title'], ENT_QUOTES, 'UTF-8'); ?></h5>
                                 <p class="card-text"><?php echo htmlspecialchars($lecture['description'] ?? '-', ENT_QUOTES, 'UTF-8'); ?></p>
                                 <?php if (!empty($lecture['drive_folder_id'])): ?>
-                                    <a href="https://drive.google.com/drive/folders/<?php echo htmlspecialchars($lecture['drive_folder_id'], ENT_QUOTES, 'UTF-8'); ?>" target="_blank" class="btn btn-outline-primary btn-sm w-100 w-md-auto">Open Lecture Folder</a>
+                                    <a href="lecture_player.php?lecture_id=<?php echo (int)$lecture['id']; ?>" class="btn btn-outline-primary btn-sm w-100 w-md-auto">Play Lecture</a>
                                 <?php endif; ?>
                             </div>
                         </div>

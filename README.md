@@ -44,6 +44,7 @@ The system is intended to solve the teacher’s daily workflow without becoming 
 - create MCQ quizzes
 - view content by group
 - access dedicated pages for students, groups, lectures, resources, and quizzes
+- use dashboard cards that link directly to the main management pages
 
 ### Student Portal
 - login and protected access
@@ -66,6 +67,8 @@ The project currently includes the following working modules:
 - resource management
 - quiz management
 - student-facing lecture, resource, and quiz pages
+- public landing, about, and contact pages
+- student password change flow
 - logo integration in admin and student navigation
 
 ## Database

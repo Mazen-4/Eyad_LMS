@@ -7,10 +7,10 @@ $conn = getDbConnection();
 $studentGroupId = (int)($user['group_id'] ?? 0);
 
 if ($studentGroupId > 0) {
-    $resourcesResult = $conn->prepare('SELECT id, title, description, pdf_path FROM resources WHERE status = "active" AND group_id = ? ORDER BY created_at DESC');
-    $resourcesResult->bind_param('i', $studentGroupId);
-    $resourcesResult->execute();
-    $resourcesResult = $resourcesResult->get_result();
+    $resourcesStmt = $conn->prepare('SELECT DISTINCT r.id, r.title, r.description, r.pdf_path FROM resources r LEFT JOIN resource_group_access rga ON rga.resource_id = r.id WHERE r.status = "active" AND (r.group_id = ? OR rga.group_id = ?) ORDER BY r.created_at DESC');
+    $resourcesStmt->bind_param('ii', $studentGroupId, $studentGroupId);
+    $resourcesStmt->execute();
+    $resourcesResult = $resourcesStmt->get_result();
 } else {
     $resourcesResult = $conn->query('SELECT id, title, description, pdf_path FROM resources WHERE status = "active" ORDER BY created_at DESC');
 }
