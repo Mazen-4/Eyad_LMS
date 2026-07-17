@@ -73,6 +73,21 @@ if ($quizAttemptsTableResult && $quizAttemptsTableResult->num_rows === 0) {
     }
 }
 
+$quizExtraAttemptsTableResult = $conn->query("SHOW TABLES LIKE 'quiz_extra_attempts'");
+if ($quizExtraAttemptsTableResult && $quizExtraAttemptsTableResult->num_rows === 0) {
+    $conn->query("CREATE TABLE quiz_extra_attempts (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        quiz_id INT NOT NULL,
+        student_id INT NOT NULL,
+        extra_attempts INT NOT NULL DEFAULT 1,
+        reason VARCHAR(255) DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY unique_quiz_student (quiz_id, student_id),
+        KEY quiz_id (quiz_id),
+        KEY student_id (student_id)
+    )");
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? 'create';
     $quizId = (int)($_POST['quiz_id'] ?? 0);
@@ -82,7 +97,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $timeLimitMinutes = (int)($_POST['time_limit_minutes'] ?? 0);
     $maxAttempts = (int)($_POST['max_attempts'] ?? 0);
 
-    if ($title === '' || empty($selectedGroups)) {
+    if ($action === 'grant_extra_attempt') {
+        $grantQuizId = (int)($_POST['grant_quiz_id'] ?? 0);
+        $grantStudentId = (int)($_POST['grant_student_id'] ?? 0);
+        $grantExtraAttempts = (int)($_POST['extra_attempts'] ?? 0);
+        $reason = trim($_POST['reason'] ?? '');
+
+        if ($grantQuizId <= 0 || $grantStudentId <= 0 || $grantExtraAttempts <= 0) {
+            $error = 'Please select a quiz, student, and a valid number of extra attempts.';
+        } else {
+            $existingOverrideStmt = $conn->prepare('SELECT id FROM quiz_extra_attempts WHERE quiz_id = ? AND student_id = ? LIMIT 1');
+            $existingOverrideStmt->bind_param('ii', $grantQuizId, $grantStudentId);
+            $existingOverrideStmt->execute();
+            $existingOverride = $existingOverrideStmt->get_result()->fetch_assoc();
+
+            if ($existingOverride) {
+                $updateOverrideStmt = $conn->prepare('UPDATE quiz_extra_attempts SET extra_attempts = ?, reason = ? WHERE quiz_id = ? AND student_id = ?');
+                $updateOverrideStmt->bind_param('isii', $grantExtraAttempts, $reason, $grantQuizId, $grantStudentId);
+                $updateOverrideStmt->execute();
+            } else {
+                $insertOverrideStmt = $conn->prepare('INSERT INTO quiz_extra_attempts (quiz_id, student_id, extra_attempts, reason) VALUES (?, ?, ?, ?)');
+                $insertOverrideStmt->bind_param('iiis', $grantQuizId, $grantStudentId, $grantExtraAttempts, $reason);
+                $insertOverrideStmt->execute();
+            }
+
+            $success = 'Extra attempt access granted successfully.';
+        }
+    } elseif ($title === '' || empty($selectedGroups)) {
         $error = 'Quiz title and at least one group are required.';
     } else {
         $primaryGroupId = (int)$selectedGroups[0];
@@ -220,7 +261,18 @@ $groups = [];
 while ($group = $groupsResult->fetch_assoc()) {
     $groups[] = $group;
 }
+$studentsResult = $conn->query('SELECT id, name, username FROM users WHERE role = "student" ORDER BY name');
+$students = [];
+while ($student = $studentsResult->fetch_assoc()) {
+    $students[] = $student;
+}
 $quizzesResult = $conn->query('SELECT id, title, status, created_at, group_id, time_limit_minutes, max_attempts FROM quizzes ORDER BY created_at DESC');
+$quizSelectResult = $conn->query('SELECT id, title FROM quizzes ORDER BY title');
+$quizOptions = [];
+while ($quizOption = $quizSelectResult->fetch_assoc()) {
+    $quizOptions[] = $quizOption;
+}
+$extraAttemptsResult = $conn->query('SELECT qea.id, q.title AS quiz_title, u.name AS student_name, u.username, qea.extra_attempts, qea.reason, qea.created_at FROM quiz_extra_attempts qea INNER JOIN quizzes q ON q.id = qea.quiz_id INNER JOIN users u ON u.id = qea.student_id ORDER BY qea.created_at DESC');
 
 $editingQuiz = null;
 $editingQuestions = [];
@@ -257,6 +309,7 @@ if ($editingQuizId > 0) {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Quizzes - Admin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../assets/css/theme.css" rel="stylesheet">
 </head>
 <body>
     <?php include __DIR__ . '/../includes/admin_nav.php'; ?>
@@ -271,6 +324,76 @@ if ($editingQuizId > 0) {
 
         <?php if ($error !== ''): ?>
             <div class="alert alert-danger"><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></div>
+        <?php endif; ?>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Grant Extra Attempts</h5>
+                <form method="post" class="row g-3">
+                    <input type="hidden" name="action" value="grant_extra_attempt">
+                    <div class="col-md-4">
+                        <label class="form-label">Quiz</label>
+                        <select name="grant_quiz_id" class="form-select" required>
+                            <option value="">Select quiz</option>
+                            <?php foreach ($quizOptions as $quizOption): ?>
+                                <option value="<?php echo (int)$quizOption['id']; ?>"><?php echo htmlspecialchars($quizOption['title'], ENT_QUOTES, 'UTF-8'); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Student</label>
+                        <select name="grant_student_id" class="form-select" required>
+                            <option value="">Select student</option>
+                            <?php foreach ($students as $student): ?>
+                                <option value="<?php echo (int)$student['id']; ?>"><?php echo htmlspecialchars($student['name'] . ' (' . $student['username'] . ')', ENT_QUOTES, 'UTF-8'); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Extra Attempts</label>
+                        <input type="number" name="extra_attempts" class="form-control" min="1" value="1" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Reason</label>
+                        <input type="text" name="reason" class="form-control" placeholder="Optional">
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-outline-primary">Grant Access</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <?php if ($extraAttemptsResult && $extraAttemptsResult->num_rows > 0): ?>
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Current Extra Attempt Rules</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Quiz</th>
+                                    <th>Student</th>
+                                    <th>Extra Attempts</th>
+                                    <th>Reason</th>
+                                    <th>Created</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php while ($extraAttempt = $extraAttemptsResult->fetch_assoc()): ?>
+                                    <tr>
+                                        <td><?php echo htmlspecialchars($extraAttempt['quiz_title'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                        <td><?php echo htmlspecialchars($extraAttempt['student_name'] . ' (' . $extraAttempt['username'] . ')', ENT_QUOTES, 'UTF-8'); ?></td>
+                                        <td><?php echo (int)$extraAttempt['extra_attempts']; ?></td>
+                                        <td><?php echo htmlspecialchars($extraAttempt['reason'] ?? '-', ENT_QUOTES, 'UTF-8'); ?></td>
+                                        <td><?php echo htmlspecialchars(formatDisplayDateTime($extraAttempt['created_at']), ENT_QUOTES, 'UTF-8'); ?></td>
+                                    </tr>
+                                <?php endwhile; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         <?php endif; ?>
 
         <div class="card mb-4">

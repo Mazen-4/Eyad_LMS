@@ -83,13 +83,23 @@ if (!$lecture) {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Lecture Player</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../assets/css/theme.css" rel="stylesheet">
     <style>
         .player-frame {
             width: 100%;
-            min-height: 70vh;
+            min-height: 56vh;
+            max-height: 75vh;
             border: 0;
             border-radius: 0.5rem;
             background: #000;
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .player-frame {
+                min-height: 45vh;
+                max-height: 60vh;
+            }
         }
     </style>
 </head>
@@ -118,9 +128,9 @@ if (!$lecture) {
                         <iframe class="player-frame" src="<?php echo htmlspecialchars($sourceUrl, ENT_QUOTES, 'UTF-8'); ?>" allow="autoplay; fullscreen" allowfullscreen></iframe>
                     <?php elseif ($sourceType === 'drive_file' && $sourceUrl !== ''): ?>
                         <div class="alert alert-warning">
-                            This lecture source is a Google Drive file. It can only play here if the file is publicly accessible or shared with the current account. If Drive blocks it, use a direct video URL or upload the file to the LMS instead.
+                            This lecture source is a Google Drive file. If Drive returns a 403 error, the file is not accessible to the browser because of Drive sharing permissions or because the file is not directly playable. In that case, use a direct public video URL or upload the video to the LMS instead.
                         </div>
-                        <video class="player-frame" controls preload="metadata">
+                        <video class="player-frame" controls preload="metadata" playsinline>
                             <source src="<?php echo htmlspecialchars($sourceUrl, ENT_QUOTES, 'UTF-8'); ?>">
                             Your browser does not support the video player.
                         </video>

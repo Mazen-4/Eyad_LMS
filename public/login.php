@@ -32,14 +32,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Login - Eyad LMS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../assets/css/theme.css" rel="stylesheet">
 </head>
-<body class="bg-light">
+<body>
     <div class="container py-5">
         <div class="row justify-content-center">
             <div class="col-md-5">
-                <div class="card shadow-sm">
+                <div class="card shadow-sm section-card">
                     <div class="card-body p-4">
-                        <h2 class="mb-3">Eyad LMS</h2>
+                        <h2 class="page-title mb-3">Eyad LMS</h2>
                         <p class="text-muted">Sign in to continue</p>
 
                         <?php if ($error !== ''): ?>
