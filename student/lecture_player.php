@@ -27,7 +27,7 @@ function resolveLectureSource($value)
     }
 
     if (preg_match('#/file/d/([^/?#]+)#i', $value, $matches)) {
-        return ['type' => 'drive_file', 'url' => 'https://drive.google.com/uc?export=download&id=' . $matches[1]];
+        return ['type' => 'drive_file', 'url' => 'https://drive.google.com/file/d/' . $matches[1] . '/preview?rm=minimal'];
     }
 
     if (preg_match('#/drive/folders/([^/?#]+)#i', $value, $matches)) {
@@ -35,11 +35,11 @@ function resolveLectureSource($value)
     }
 
     if (preg_match('#/drive/u/\d+/view\?usp=sharing&id=([^&#]+)#i', $value, $matches)) {
-        return ['type' => 'drive_file', 'url' => 'https://drive.google.com/uc?export=download&id=' . $matches[1]];
+        return ['type' => 'drive_file', 'url' => 'https://drive.google.com/file/d/' . $matches[1] . '/preview?rm=minimal'];
     }
 
     if (preg_match('#[?&]id=([^&#]+)#i', $value, $matches)) {
-        return ['type' => 'drive_file', 'url' => 'https://drive.google.com/uc?export=download&id=' . $matches[1]];
+        return ['type' => 'drive_file', 'url' => 'https://drive.google.com/file/d/' . $matches[1] . '/preview?rm=minimal'];
     }
 
     if (preg_match('#/folders/([^/?#]+)#i', $value, $matches)) {
@@ -127,13 +127,7 @@ if (!$lecture) {
                     <?php elseif ($sourceType === 'youtube' && $sourceUrl !== ''): ?>
                         <iframe class="player-frame" src="<?php echo htmlspecialchars($sourceUrl, ENT_QUOTES, 'UTF-8'); ?>" allow="autoplay; fullscreen" allowfullscreen></iframe>
                     <?php elseif ($sourceType === 'drive_file' && $sourceUrl !== ''): ?>
-                        <div class="alert alert-warning">
-                            This lecture source is a Google Drive file. If Drive returns a 403 error, the file is not accessible to the browser because of Drive sharing permissions or because the file is not directly playable. In that case, use a direct public video URL or upload the video to the LMS instead.
-                        </div>
-                        <video class="player-frame" controls preload="metadata" playsinline>
-                            <source src="<?php echo htmlspecialchars($sourceUrl, ENT_QUOTES, 'UTF-8'); ?>">
-                            Your browser does not support the video player.
-                        </video>
+                        <iframe class="player-frame" src="<?php echo htmlspecialchars($sourceUrl, ENT_QUOTES, 'UTF-8'); ?>" allow="autoplay; fullscreen" allowfullscreen frameborder="0"></iframe>
                         <a href="<?php echo htmlspecialchars($sourceUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" class="btn btn-outline-primary mt-3">Open source in Drive</a>
                     <?php elseif ($sourceType === 'folder' && $sourceUrl !== ''): ?>
                         <div class="alert alert-warning">
@@ -154,5 +148,6 @@ if (!$lecture) {
             </div>
         <?php endif; ?>
     </div>
+    <?php include __DIR__ . '/../includes/public_footer.php'; ?>
 </body>
 </html>

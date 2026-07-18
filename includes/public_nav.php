@@ -1,6 +1,18 @@
 <?php
+require_once __DIR__ . '/auth.php';
 if (!isset($pageTitle)) {
     $pageTitle = 'Eyad LMS';
+}
+$dashboardLink = 'login.php';
+$dashboardLabel = 'Login';
+if (isLoggedIn()) {
+    $user = currentUser();
+    if (!empty($user['role']) && $user['role'] === 'admin') {
+        $dashboardLink = '../admin/dashboard.php';
+    } else {
+        $dashboardLink = '../student/dashboard.php';
+    }
+    $dashboardLabel = 'Dashboard';
 }
 ?>
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -17,7 +29,7 @@ if (!isset($pageTitle)) {
                 <li class="nav-item"><a class="nav-link" href="index.php">Home</a></li>
                 <li class="nav-item"><a class="nav-link" href="about.php">About</a></li>
                 <li class="nav-item"><a class="nav-link" href="contact.php">Contact</a></li>
-                <li class="nav-item"><a class="nav-link" href="login.php">Login</a></li>
+                <li class="nav-item"><a class="nav-link" href="<?php echo htmlspecialchars($dashboardLink, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($dashboardLabel, ENT_QUOTES, 'UTF-8'); ?></a></li>
             </ul>
         </div>
     </div>

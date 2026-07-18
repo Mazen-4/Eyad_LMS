@@ -83,7 +83,6 @@ The database is centered around the following entities:
 - quizzes
 - questions
 - quiz_attempts
-- website_settings
 
 The system uses a simple group-based model where each student belongs to one group and can access content assigned to that group.
 

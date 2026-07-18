@@ -79,7 +79,6 @@ Permissions
 - Upload PDFs
 - Add Lectures
 - Create Quizzes
-- Website Settings
 
 ---
 

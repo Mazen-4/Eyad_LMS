@@ -51,5 +51,6 @@ if ($studentGroupId > 0) {
             <div class="alert alert-info">No resources are available for your group yet.</div>
         <?php endif; ?>
     </div>
+    <?php include __DIR__ . '/../includes/public_footer.php'; ?>
 </body>
 </html>

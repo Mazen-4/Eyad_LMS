@@ -33,18 +33,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $pdfPath = '';
         if (isset($_FILES['pdf']) && is_array($_FILES['pdf']) && ($_FILES['pdf']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
-            $uploadDir = __DIR__ . '/../uploads/pdfs/';
-            if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0777, true);
+            $tmpName = $_FILES['pdf']['tmp_name'];
+            $originalName = basename($_FILES['pdf']['name'] ?? '');
+            $fileSize = (int)($_FILES['pdf']['size'] ?? 0);
+            $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+
+            if ($fileSize > 20 * 1024 * 1024) {
+                $error = 'PDF must be 20MB or smaller.';
+            } elseif ($extension !== 'pdf') {
+                $error = 'Only PDF files are allowed.';
+            } else {
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                $mimeType = finfo_file($finfo, $tmpName);
+                finfo_close($finfo);
+
+                if ($mimeType !== 'application/pdf') {
+                    $error = 'Only valid PDF files are allowed.';
+                }
             }
 
-            $fileName = time() . '_' . basename($_FILES['pdf']['name']);
-            $targetPath = $uploadDir . $fileName;
+            if ($error === '') {
+                $uploadDir = __DIR__ . '/../uploads/pdfs/';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0755, true);
+                }
 
-            if (move_uploaded_file($_FILES['pdf']['tmp_name'], $targetPath)) {
-                $pdfPath = 'uploads/pdfs/' . $fileName;
-            } else {
-                $error = 'Failed to upload PDF.';
+                $fileName = time() . '_' . bin2hex(random_bytes(6)) . '.pdf';
+                $targetPath = $uploadDir . $fileName;
+
+                if (move_uploaded_file($tmpName, $targetPath)) {
+                    $pdfPath = 'uploads/pdfs/' . $fileName;
+
+                    if ($action === 'edit' && $resourceId > 0) {
+                        $oldFileStmt = $conn->prepare('SELECT pdf_path FROM resources WHERE id = ? LIMIT 1');
+                        $oldFileStmt->bind_param('i', $resourceId);
+                        $oldFileStmt->execute();
+                        $oldFile = $oldFileStmt->get_result()->fetch_assoc();
+                        if (!empty($oldFile['pdf_path'])) {
+                            $oldFilePath = __DIR__ . '/../' . $oldFile['pdf_path'];
+                            if (is_file($oldFilePath)) {
+                                unlink($oldFilePath);
+                            }
+                        }
+                    }
+                } else {
+                    $error = 'Failed to upload PDF file.';
+                }
             }
         } elseif ($action === 'create') {
             $error = 'Please upload a PDF file.';
@@ -185,6 +219,7 @@ if ($editingResourceId > 0) {
                     <div class="col-md-3">
                         <label class="form-label">PDF File</label>
                         <input type="file" name="pdf" class="form-control" accept="application/pdf" <?php echo $editingResource ? '' : 'required'; ?>>
+                        <div class="form-text">Supported format: PDF. Maximum file size: 20MB.</div>
                         <?php if ($editingResource): ?>
                             <div class="form-text">Leave blank to keep the current PDF.</div>
                         <?php endif; ?>
@@ -284,5 +319,6 @@ if ($editingResourceId > 0) {
             </div>
         </div>
     </div>
+    <?php include __DIR__ . '/../includes/public_footer.php'; ?>
 </body>
 </html>

@@ -11,8 +11,10 @@
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background-color: #07111f;
   background-image:
     linear-gradient(rgba(148, 163, 184, 0.12) 1px, transparent 1px),
@@ -22,6 +24,15 @@ body {
   color: #e2e8f0;
   position: relative;
   overflow-x: hidden;
+}
+
+main,
+.container {
+  flex: 1 0 auto;
+}
+
+footer.site-footer {
+  flex-shrink: 0;
 }
 
 .navbar {
@@ -159,6 +170,22 @@ p,
 .navbar-brand {
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+.site-footer {
+  background: rgba(2, 6, 23, 0.9);
+  color: #f8fafc;
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.site-footer a {
+  color: #bfdbfe;
+  text-decoration: none;
+}
+
+.site-footer a:hover {
+  color: #ffffff;
+  text-decoration: underline;
 }
 
 @media (max-width: 768px) {

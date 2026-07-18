@@ -35,6 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link href="../assets/css/theme.css" rel="stylesheet">
 </head>
 <body>
+    <?php include __DIR__ . '/../includes/public_nav.php'; ?>
     <div class="container py-5">
         <div class="row justify-content-center">
             <div class="col-md-5">
@@ -63,5 +64,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </div>
     </div>
+    <?php include __DIR__ . '/../includes/public_footer.php'; ?>
 </body>
 </html>

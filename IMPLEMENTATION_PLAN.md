@@ -14,7 +14,7 @@ This project is a simple, professional Learning Management System for Eng. Eyad 
 ### Version 1 scope
 - Public pages: Home, About, Contact, Login
 - Student portal: Dashboard, Lectures, Resources, Quizzes, Password change
-- Admin panel: Dashboard, Students, Lecture Groups, Lectures, Resources, Quizzes, Website Settings
+- Admin panel: Dashboard, Students, Lecture Groups, Lectures, Resources, Quizzes
 - Authentication: username/password for students and teacher
 - Content access: group-based access only
 
@@ -121,15 +121,6 @@ project/
   - score
   - submitted_at
 
-- website_settings
-  - id
-  - site_name
-  - phone
-  - logo
-  - hero_title
-  - hero_description
-  - social_links
-
 ---
 
 ## 5. Implementation Phases
@@ -158,7 +149,6 @@ Tasks:
 - About page
 - Contact page
 - Login page
-- Website settings integration
 - Responsive, modern UI
 
 Deliverable:
@@ -187,7 +177,6 @@ Tasks:
 - Lecture management CRUD
 - Resource upload and management
 - Quiz and question management
-- Website settings management
 
 Deliverable:
 - Teacher can manage all core LMS features from one panel
@@ -214,7 +203,7 @@ Deliverable:
 3. Group-based content access
 4. Lectures and resources
 5. Quizzes
-6. Website settings and polish
+6. Polish and deployment
 
 ---
 

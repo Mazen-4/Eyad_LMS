@@ -69,5 +69,6 @@ $user = requireLogin(['admin']);
             </div>
         </div>
     </div>
+    <?php include __DIR__ . '/../includes/public_footer.php'; ?>
 </body>
 </html>

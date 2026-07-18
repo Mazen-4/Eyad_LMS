@@ -14,12 +14,35 @@ require_once __DIR__ . '/../includes/auth.php';
     <?php include __DIR__ . '/../includes/public_nav.php'; ?>
     <div class="container py-5">
         <h1 class="mb-3">About the Platform</h1>
-        <p class="lead text-muted">This LMS is designed to keep teaching organized, simple, and accessible for one instructor and their students.</p>
-        <p>It supports secure login, group-based content assignment, quizzes, and an easy-to-manage admin workflow without unnecessary complexity.</p>
+        <p class="lead text-muted">This LMS is built to make Eng. Eyad Mazhar’s American-system mathematics teaching easy to access and easy to manage.</p>
+        <p>It provides a secure home for EST, DSAT, and ACT preparation, helping students stay organized and focused on the topics that matter most.</p>
+
+        <div class="row gy-4 mt-4">
+            <div class="col-lg-6">
+                <div class="card section-card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Focused on American-system math</h5>
+                        <p class="card-text text-muted">This platform supports Eng. Eyad Mazhar’s teaching for American curriculum students in Egypt.</p>
+                        <p class="card-text text-muted">It is especially suited for students preparing for EST, DSAT, and ACT exams.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <h2 class="mb-3">Why it works</h2>
+            <ul class="text-muted">
+                <li>Secure group-based access for lectures, resources, and quizzes.</li>
+                <li>Simple design so students can focus on learning, not navigation.</li>
+                <li>Teacher-managed content with no student self-registration or payments.</li>
+            </ul>
+        </div>
+
         <div class="mt-4">
             <a href="index.php" class="btn btn-primary me-2">Back to Home</a>
             <a href="contact.php" class="btn btn-outline-secondary">Contact the Instructor</a>
         </div>
     </div>
+    <?php include __DIR__ . '/../includes/public_footer.php'; ?>
 </body>
 </html>

@@ -120,7 +120,6 @@ Modules:
 - Lectures
 - Resources
 - Quizzes
-- Website Settings
 
 ---
 

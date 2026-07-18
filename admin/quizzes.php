@@ -198,22 +198,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (isset($_FILES['question_image']) && is_array($_FILES['question_image']) && isset($_FILES['question_image']['tmp_name'][$index])) {
                 $imageFile = $_FILES['question_image'];
                 $tmpName = $imageFile['tmp_name'][$index] ?? '';
+                $originalName = basename($imageFile['name'][$index] ?? '');
+                $imageSize = (int)($imageFile['size'][$index] ?? 0);
+                $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+
                 if ($tmpName !== '' && ($imageFile['error'][$index] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
-                    if ($imagePath !== '') {
-                        $oldImageFilePath = __DIR__ . '/../' . $imagePath;
-                        if (is_file($oldImageFilePath)) {
-                            unlink($oldImageFilePath);
+                    if (!in_array($extension, ['jpg', 'jpeg', 'png', 'gif'], true)) {
+                        $error = 'Only JPG, PNG, GIF images are allowed for quiz questions.';
+                    } elseif ($imageSize > 2 * 1024 * 1024) {
+                        $error = 'Quiz images must be 2MB or smaller.';
+                    } else {
+                        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                        $mimeType = finfo_file($finfo, $tmpName);
+                        finfo_close($finfo);
+
+                        if (!in_array($mimeType, ['image/jpeg', 'image/png', 'image/gif'], true)) {
+                            $error = 'Only valid image files are allowed.';
                         }
                     }
 
-                    $uploadDir = __DIR__ . '/../uploads/quizzes/';
-                    if (!is_dir($uploadDir)) {
-                        mkdir($uploadDir, 0777, true);
-                    }
-                    $fileName = time() . '_' . $index . '_' . basename($imageFile['name'][$index]);
-                    $targetPath = $uploadDir . $fileName;
-                    if (move_uploaded_file($tmpName, $targetPath)) {
-                        $imagePath = 'uploads/quizzes/' . $fileName;
+                    if ($error === '') {
+                        if ($imagePath !== '') {
+                            $oldImageFilePath = __DIR__ . '/../' . $imagePath;
+                            if (is_file($oldImageFilePath)) {
+                                unlink($oldImageFilePath);
+                            }
+                        }
+
+                        $uploadDir = __DIR__ . '/../uploads/quizzes/';
+                        if (!is_dir($uploadDir)) {
+                            mkdir($uploadDir, 0755, true);
+                        }
+                        $fileName = time() . '_' . $index . '_' . bin2hex(random_bytes(6)) . '.' . $extension;
+                        $targetPath = $uploadDir . $fileName;
+                        if (move_uploaded_file($tmpName, $targetPath)) {
+                            $imagePath = 'uploads/quizzes/' . $fileName;
+                        } else {
+                            $error = 'Failed to upload quiz image.';
+                        }
                     }
                 }
             }
@@ -467,6 +489,7 @@ if ($editingQuizId > 0) {
                                         <div class="mb-2">
                                             <label class="form-label">Question Image (optional)</label>
                                             <input type="file" name="question_image[]" class="form-control" accept="image/*">
+                                            <div class="form-text">Supported formats: JPG, PNG, GIF. Maximum file size: 2MB.</div>
                                             <?php if (!empty($question['image_path'])): ?>
                                                 <div class="form-text">Current image: <a href="../<?php echo htmlspecialchars($question['image_path'], ENT_QUOTES, 'UTF-8'); ?>" target="_blank">View</a></div>
                                             <?php endif; ?>
@@ -594,5 +617,6 @@ if ($editingQuizId > 0) {
             container.appendChild(block);
         }
     </script>
+    <?php include __DIR__ . '/../includes/public_footer.php'; ?>
 </body>
 </html>
