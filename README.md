@@ -1,6 +1,6 @@
 # Eyad LMS Documentation
 
-This document describes the current implementation of Eyad LMS, a lightweight learning management system built for Eng. Eyad Mazhar. The platform is designed to be simple, professional, and practical for a single instructor managing students, lectures, resources, and quizzes.
+This document describes the current implementation of Eyad LMS, a lightweight learning management system built for Eng. Eyad Mazhar. The platform is designed to be simple, professional, and practical for a single instructor managing students, learning sessions, resources, and quizzes.
 
 ## 1. Project Overview
 
@@ -17,10 +17,11 @@ The system is intentionally focused on the core teaching workflow rather than tr
 The implementation aims to provide:
 
 - secure login for admins and students
-- group-based access control for educational content
-- a clean student experience for lectures, PDFs, and quizzes
+- flexible group-based access control for educational content
+- a clean student experience for sessions, PDFs, and quizzes
 - a simple admin workflow for managing all core LMS data
 - responsive layouts that work well on desktop and mobile devices
+- improved quiz workflows with attempt tracking, timers, and history
 
 ## 3. What Has Been Implemented
 
@@ -43,18 +44,19 @@ The current codebase includes the following completed features:
 
 ### Admin Panel
 - admin dashboard with quick access cards
-- student management with create, update, delete, and group assignment
+- student management with create, update, delete, and multi-group assignment
 - group management for organizing students into learning cohorts
-- lecture management with title, description, display order, status, and group visibility
+- session/lecture management with title, description, display order, status, and group visibility
 - resource management with PDF upload, description, status, and group visibility
 - quiz management with MCQ questions, image support, group access, time limits, attempt limits, and extra-attempt overrides
+- minimal admin account creation for additional administrators
 
 ### Student Portal
 - student dashboard
-- lecture listing filtered by the student’s assigned group
-- lecture player with support for direct video files, YouTube links, Google Drive links, and Drive folders
-- resource listing for PDFs assigned to the student’s group
-- quiz experience with start/continue functionality, timer support, group-based availability, and scoring
+- session listing filtered by all groups assigned to the student
+- lecture/player experience with support for direct video files, YouTube links, Google Drive links, and Drive folders
+- resource listing for PDFs assigned to the student’s groups
+- quiz experience with start/continue functionality, timer support, attempt history, score percentages, and dismissible feedback
 - password change flow for students
 
 ## 4. Technology Stack
@@ -109,9 +111,10 @@ Available admin modules:
 - Dashboard
 - Students
 - Groups
-- Lectures
+- Sessions
 - Resources
 - Quizzes
+- Admins
 
 Admin users can manage the full learning content lifecycle from one panel.
 
@@ -120,12 +123,12 @@ The student area is restricted to users with the student role.
 
 Available student modules:
 - Dashboard
-- Lectures
+- Sessions
 - Resources
 - Quizzes
 - Change Password
 
-Students only see content assigned to their group.
+Students see content assigned to any group they belong to, which allows broader access when they are linked to multiple groups.
 
 ## 7. Authentication and Authorization Model
 
@@ -142,7 +145,7 @@ Authentication is handled through the shared auth helper in the includes folder.
 - student: access only to allowed student portal pages and assigned content
 
 ### Access control behavior
-- Students can only access lectures, resources, and quizzes assigned to their group.
+- Students can access sessions, resources, and quizzes assigned to any group they belong to.
 - Admin users can manage all content regardless of group.
 
 ## 8. Database Design
@@ -226,23 +229,25 @@ Stores admin-granted extra quiz attempts for specific students.
 ### 9.1 Admin Workflow
 An admin user can:
 
-1. Create student accounts and assign them to a group.
+1. Create student accounts and assign them to one or more groups.
 2. Create learning groups such as Basic, Advanced 1, and Advanced 2.
-3. Add lectures and connect them to one or more groups.
+3. Add sessions/lectures and connect them to one or more groups.
 4. Upload PDF resources and assign them to groups.
 5. Create quizzes with multiple questions and correct answers.
 6. Set time limits and maximum attempts for quizzes.
 7. Grant extra attempts to students when needed.
+8. Create additional admin accounts when needed.
 
 ### 9.2 Student Workflow
 A student user can:
 
 1. Log in to the student portal.
-2. View lectures assigned to their group.
-3. Open lecture content through the lecture viewer.
-4. Download or view PDF resources assigned to their group.
-5. Start and complete quizzes available for their group.
-6. Change their password.
+2. View sessions assigned to any group they belong to.
+3. Open session content through the session viewer.
+4. Download or view PDF resources assigned to their groups.
+5. Start, continue, and complete quizzes available for their groups.
+6. Review previous quiz attempts and scores.
+7. Change their password.
 
 ## 10. Lecture Handling
 
@@ -280,12 +285,15 @@ The quiz system is currently a simple MCQ implementation.
 - time-limit support
 - attempt-limit support
 - extra-attempt overrides from admin
+- quiz attempt tracking with score percentages and status history
 
 ### Student quiz behavior
 - Students can start an attempt.
 - They may continue an in-progress attempt.
 - The system uses the selected answers to calculate a score.
 - Results are stored in the quiz_attempts table.
+- Students can view their previous attempts and see whether a quiz was not attempted yet.
+- The student interface also shows dismissible success/error feedback and a countdown timer when a time limit is active.
 
 ## 13. Installation and Setup
 
@@ -386,5 +394,5 @@ The current implementation can be extended in many ways, including:
 
 ## 20. Summary
 
-Eyad LMS is now a functional, simple, and practical learning platform for a single instructor. It covers the core education workflow needed for a teacher to manage students, group-based content, lectures, resources, quizzes, and student access in one place.
+Eyad LMS is now a functional, simple, and practical learning platform for a single instructor. It covers the core education workflow needed for a teacher to manage students, multi-group access, learning sessions, resources, quizzes, and student progress in one place.
 

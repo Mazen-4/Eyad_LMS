@@ -16,17 +16,20 @@ function normalizeDriveLink($value)
         return '';
     }
 
+    $value = preg_replace('#/view(\?.*)?$#i', '/preview?rm=minimal', $value);
+    $value = preg_replace('#/preview(\?.*)?$#i', '/preview?rm=minimal', $value);
+
     if (preg_match('#^https?://#i', $value)) {
         if (preg_match('#/folders/([^/?#]+)#i', $value, $matches)) {
             return 'https://drive.google.com/drive/folders/' . $matches[1];
         }
 
         if (preg_match('#/file/d/([^/?#]+)#i', $value, $matches)) {
-            return 'https://drive.google.com/file/d/' . $matches[1] . '/view?usp=sharing';
+            return 'https://drive.google.com/file/d/' . $matches[1] . '/preview?rm=minimal';
         }
 
         if (preg_match('#[?&]id=([^&#]+)#i', $value, $matches)) {
-            return 'https://drive.google.com/drive/folders/' . $matches[1];
+            return 'https://drive.google.com/file/d/' . $matches[1] . '/preview?rm=minimal';
         }
 
         return $value;

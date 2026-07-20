@@ -14,54 +14,80 @@ $lecture = null;
 $sourceType = 'empty';
 $sourceUrl = '';
 
-function resolveLectureSource($value)
+function normalizeDriveLinkUrl($value)
 {
     $value = trim((string)$value);
     if ($value === '') {
-        return ['type' => 'empty', 'url' => ''];
-    }
-
-    if (preg_match('/\.(mp4|webm|ogg)(\?.*)?$/i', $value)) {
-        return ['type' => 'video', 'url' => $value];
-    }
-
-    if (preg_match('/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]+)/i', $value, $matches)) {
-        return ['type' => 'youtube', 'url' => 'https://www.youtube.com/embed/' . $matches[1]];
-    }
-
-    if (preg_match('#/file/d/([^/?#]+)#i', $value, $matches)) {
-        return ['type' => 'drive_file', 'url' => 'https://drive.google.com/file/d/' . $matches[1] . '/preview?rm=minimal'];
-    }
-
-    if (preg_match('#/drive/folders/([^/?#]+)#i', $value, $matches)) {
-        return ['type' => 'folder', 'url' => 'https://drive.google.com/drive/folders/' . $matches[1]];
-    }
-
-    if (preg_match('#/drive/u/\d+/view\?usp=sharing&id=([^&#]+)#i', $value, $matches)) {
-        return ['type' => 'drive_file', 'url' => 'https://drive.google.com/file/d/' . $matches[1] . '/preview?rm=minimal'];
-    }
-
-    if (preg_match('#[?&]id=([^&#]+)#i', $value, $matches)) {
-        return ['type' => 'drive_file', 'url' => 'https://drive.google.com/file/d/' . $matches[1] . '/preview?rm=minimal'];
-    }
-
-    if (preg_match('#/folders/([^/?#]+)#i', $value, $matches)) {
-        return ['type' => 'folder', 'url' => 'https://drive.google.com/drive/folders/' . $matches[1]];
-    }
-
-    if (preg_match('/^[a-zA-Z0-9\-_]+$/', $value)) {
-        return ['type' => 'folder', 'url' => 'https://drive.google.com/drive/folders/' . $value];
+        return '';
     }
 
     if (preg_match('#^https?://#i', $value)) {
-        if (stripos($value, 'drive.google.com') !== false) {
-            return ['type' => 'drive_file', 'url' => $value];
+        if (preg_match('#/file/d/([^/?#]+)#i', $value, $matches)) {
+            return 'https://drive.google.com/file/d/' . $matches[1] . '/preview?rm=minimal';
         }
 
-        return ['type' => 'link', 'url' => $value];
+        if (preg_match('#/drive/u/\d+/view\?usp=sharing&id=([^&#]+)#i', $value, $matches)) {
+            return 'https://drive.google.com/file/d/' . $matches[1] . '/preview?rm=minimal';
+        }
+
+        if (preg_match('#[?&]id=([^&#]+)#i', $value, $matches)) {
+            return 'https://drive.google.com/file/d/' . $matches[1] . '/preview?rm=minimal';
+        }
+
+        if (preg_match('#/drive/folders/([^/?#]+)#i', $value, $matches)) {
+            return 'https://drive.google.com/drive/folders/' . $matches[1];
+        }
+
+        if (preg_match('#/folders/([^/?#]+)#i', $value, $matches)) {
+            return 'https://drive.google.com/drive/folders/' . $matches[1];
+        }
+
+        return $value;
     }
 
-    return ['type' => 'unsupported', 'url' => $value];
+    if (preg_match('/^[a-zA-Z0-9\-_]+$/', $value)) {
+        return 'https://drive.google.com/drive/folders/' . $value;
+    }
+
+    return $value;
+}
+
+function resolveLectureSource($value)
+{
+    $normalizedValue = normalizeDriveLinkUrl($value);
+    if ($normalizedValue === '') {
+        return ['type' => 'empty', 'url' => ''];
+    }
+
+    if (preg_match('/\.(mp4|webm|ogg)(\?.*)?$/i', $normalizedValue)) {
+        return ['type' => 'video', 'url' => $normalizedValue];
+    }
+
+    if (preg_match('/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]+)/i', $normalizedValue, $matches)) {
+        return ['type' => 'youtube', 'url' => 'https://www.youtube.com/embed/' . $matches[1]];
+    }
+
+    if (preg_match('#/file/d/([^/?#]+)#i', $normalizedValue, $matches)) {
+        return ['type' => 'drive_file', 'url' => 'https://drive.google.com/file/d/' . $matches[1] . '/preview?rm=minimal'];
+    }
+
+    if (preg_match('#/drive/folders/([^/?#]+)#i', $normalizedValue, $matches)) {
+        return ['type' => 'folder', 'url' => 'https://drive.google.com/drive/folders/' . $matches[1]];
+    }
+
+    if (preg_match('#/folders/([^/?#]+)#i', $normalizedValue, $matches)) {
+        return ['type' => 'folder', 'url' => 'https://drive.google.com/drive/folders/' . $matches[1]];
+    }
+
+    if (preg_match('#^https?://#i', $normalizedValue)) {
+        if (stripos($normalizedValue, 'drive.google.com') !== false) {
+            return ['type' => 'drive_file', 'url' => $normalizedValue];
+        }
+
+        return ['type' => 'link', 'url' => $normalizedValue];
+    }
+
+    return ['type' => 'unsupported', 'url' => $normalizedValue];
 }
 
 if ($lectureId > 0 && !empty($studentGroupIds)) {

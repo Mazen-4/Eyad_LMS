@@ -16,16 +16,27 @@ function normalizeDriveLink($value)
         return '';
     }
 
+    $value = preg_replace('#/view(\?.*)?$#i', '/preview?rm=minimal', $value);
+    $value = preg_replace('#/preview(\?.*)?$#i', '/preview?rm=minimal', $value);
+
     if (preg_match('#^https?://#i', $value)) {
-        if (preg_match('#/folders/([^/?#]+)#i', $value, $matches)) {
-            return 'https://drive.google.com/drive/folders/' . $matches[1];
+        if (preg_match('#/file/d/([^/?#]+)#i', $value, $matches)) {
+            return 'https://drive.google.com/file/d/' . $matches[1] . '/preview?rm=minimal';
         }
 
-        if (preg_match('#/file/d/([^/?#]+)#i', $value, $matches)) {
-            return 'https://drive.google.com/file/d/' . $matches[1] . '/view?usp=sharing';
+        if (preg_match('#/drive/u/\d+/view\?usp=sharing&id=([^&#]+)#i', $value, $matches)) {
+            return 'https://drive.google.com/file/d/' . $matches[1] . '/preview?rm=minimal';
         }
 
         if (preg_match('#[?&]id=([^&#]+)#i', $value, $matches)) {
+            return 'https://drive.google.com/file/d/' . $matches[1] . '/preview?rm=minimal';
+        }
+
+        if (preg_match('#/drive/folders/([^/?#]+)#i', $value, $matches)) {
+            return 'https://drive.google.com/drive/folders/' . $matches[1];
+        }
+
+        if (preg_match('#/folders/([^/?#]+)#i', $value, $matches)) {
             return 'https://drive.google.com/drive/folders/' . $matches[1];
         }
 
@@ -44,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $lectureId = (int)($_POST['lecture_id'] ?? 0);
     $title = trim($_POST['title'] ?? '');
     $description = trim($_POST['description'] ?? '');
-    $driveFolderId = trim($_POST['drive_folder_id'] ?? '');
+    $driveFolderId = normalizeDriveLink(trim($_POST['drive_folder_id'] ?? ''));
     $displayOrder = (int)($_POST['display_order'] ?? 0);
     $status = $_POST['status'] ?? 'active';
     $selectedGroups = (array)($_POST['group_ids'] ?? []);
