@@ -141,6 +141,23 @@ Deliverable:
 - Student can log in
 - Access is restricted by role
 
+### Phase 2A - Client Requested Enhancements
+Goal: incorporate the Phase 2 client requirements into the LMS scope and product direction.
+
+Tasks:
+- Rename the content area from "Lectures" to "Sessions" across the UI and routes
+- Update the public navbar branding to show "Eng. Eyad Mazhar" instead of "Eyad LMS"
+- Support students belonging to multiple groups instead of a single group
+- Add a limit for the number of devices allowed per account
+- Support multiple admin accounts with role-based access
+- Add quiz review functionality showing attempts and scores for students and admins
+- Remove the button that opens a lecture in Google Drive from the lecture page
+- Automatically normalize uploaded Google Drive links into the correct preview format
+- Strengthen lecture security by tracking view attempts and blocking recording or screenshot actions where possible
+
+Deliverable:
+- The platform includes the requested Phase 2 workflow, access, and security enhancements
+
 ### Phase 2 - Public Website
 Goal: build the public-facing marketing pages.
 

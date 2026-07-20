@@ -18,7 +18,7 @@ $user = requireLogin(['admin']);
     <div class="container py-4">
         <div class="hero-panel mb-4">
             <h1 class="page-title mb-2">Admin Dashboard</h1>
-            <p class="text-muted mb-0">Manage students, lectures, resources, and quizzes from one clean workspace.</p>
+            <p class="text-muted mb-0">Manage students, sessions, resources, and quizzes from one clean workspace.</p>
         </div>
         <div class="row g-3">
             <div class="col-md-4">
@@ -33,12 +33,23 @@ $user = requireLogin(['admin']);
                 </a>
             </div>
             <div class="col-md-4">
+                <a href="admins.php" class="text-decoration-none text-dark">
+                    <div class="card h-100 shadow-sm hover-shadow">
+                        <div class="card-body">
+                            <h5 class="card-title">Admins</h5>
+                            <p class="card-text">Create and manage additional admin accounts.</p>
+                            <span class="btn btn-outline-primary btn-sm mt-2">Open Admins</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-4">
                 <a href="lectures.php" class="text-decoration-none text-dark">
                     <div class="card h-100 shadow-sm hover-shadow">
                         <div class="card-body">
-                            <h5 class="card-title">Lectures</h5>
-                            <p class="card-text">Create and organize lecture folders and access.</p>
-                            <span class="btn btn-outline-primary btn-sm mt-2">Open Lectures</span>
+                            <h5 class="card-title">Sessions</h5>
+                            <p class="card-text">Create and organize session folders and access.</p>
+                            <span class="btn btn-outline-primary btn-sm mt-2">Open Sessions</span>
                         </div>
                     </div>
                 </a>

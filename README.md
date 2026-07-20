@@ -1,18 +1,63 @@
-# Eyad LMS
+# Eyad LMS Documentation
 
-Eyad LMS is a lightweight Learning Management System designed for Eng. Eyad Mazhar. The platform is built as a simple, modern, and affordable educational portal for a single instructor managing students, lectures, resources, and quizzes.
+This document describes the current implementation of Eyad LMS, a lightweight learning management system built for Eng. Eyad Mazhar. The platform is designed to be simple, professional, and practical for a single instructor managing students, lectures, resources, and quizzes.
 
-## Project Purpose
+## 1. Project Overview
 
-The system is intended to solve the teacher’s daily workflow without becoming overly complex. It supports:
+Eyad LMS is a web-based educational portal that combines three main experiences:
 
-- a public website for marketing and access
-- an admin panel for the teacher
-- a student portal for assigned content
-- group-based access control
-- simple quiz management
+- a public website for visitors and prospective students
+- an admin panel for the instructor
+- a student portal for assigned learning content
 
-## Technology Stack
+The system is intentionally focused on the core teaching workflow rather than trying to replicate a large enterprise LMS. The current version is meant to be affordable, easy to maintain, and suitable for a teacher running a small or medium-sized course program.
+
+## 2. Goals of the System
+
+The implementation aims to provide:
+
+- secure login for admins and students
+- group-based access control for educational content
+- a clean student experience for lectures, PDFs, and quizzes
+- a simple admin workflow for managing all core LMS data
+- responsive layouts that work well on desktop and mobile devices
+
+## 3. What Has Been Implemented
+
+The current codebase includes the following completed features:
+
+### Public Website
+- Home page with a modern landing experience
+- About page
+- Contact page
+- Login page
+- Shared navigation and footer components
+- Branding and logo integration
+
+### Authentication and Access Control
+- session-based authentication
+- login/logout flow
+- role-based redirection for admin and student users
+- protected pages for admin and student sections
+- student group information loaded from the database during the session
+
+### Admin Panel
+- admin dashboard with quick access cards
+- student management with create, update, delete, and group assignment
+- group management for organizing students into learning cohorts
+- lecture management with title, description, display order, status, and group visibility
+- resource management with PDF upload, description, status, and group visibility
+- quiz management with MCQ questions, image support, group access, time limits, attempt limits, and extra-attempt overrides
+
+### Student Portal
+- student dashboard
+- lecture listing filtered by the student’s assigned group
+- lecture player with support for direct video files, YouTube links, Google Drive links, and Drive folders
+- resource listing for PDFs assigned to the student’s group
+- quiz experience with start/continue functionality, timer support, group-based availability, and scoring
+- password change flow for students
+
+## 4. Technology Stack
 
 ### Frontend
 - HTML5
@@ -22,126 +67,324 @@ The system is intended to solve the teacher’s daily workflow without becoming 
 
 ### Backend
 - PHP 8+
-- MySQL
-- Apache
+- MySQL / MariaDB
+- Apache through WAMP/XAMPP
 
-### Authentication
-- session-based authentication
-- role-based access for admin and student users
+### Other Notes
+- The UI uses a simple, modern, academic-style design with shared layout partials.
+- The project relies on PHP sessions and MySQL for persistence.
 
-## Core Features
-
-### Public Area
-- home/login entry point
-- accessible public-facing pages
-
-### Admin Panel
-- login and protected access
-- manage students
-- manage groups
-- create and assign lectures
-- upload and assign PDF resources
-- create MCQ quizzes
-- view content by group
-- access dedicated pages for students, groups, lectures, resources, and quizzes
-- use dashboard cards that link directly to the main management pages
-
-### Student Portal
-- login and protected access
-- view lectures assigned to the student’s group
-- view resources assigned to the student’s group
-- view quizzes assigned to the student’s group
-- submit quiz answers and receive instant scoring feedback
-- use a responsive student dashboard and navigation menu
-
-## Current Implementation Status
-
-The project currently includes the following working modules:
-
-- authentication and role-based access
-- admin dashboard and navigation
-- student dashboard and navigation
-- student management
-- group management
-- lecture management
-- resource management
-- quiz management
-- student-facing lecture, resource, and quiz pages
-- public landing, about, and contact pages
-- student password change flow
-- logo integration in admin and student navigation
-
-## Database
-
-The database is centered around the following entities:
-
-- users
-- groups
-- lectures
-- lecture_folder_access
-- resources
-- quizzes
-- questions
-- quiz_attempts
-
-The system uses a simple group-based model where each student belongs to one group and can access content assigned to that group.
-
-## Project Structure
+## 5. Project Structure
 
 ```text
 Eyad_LMS/
-├── admin/              # admin panel pages
-├── student/            # student portal pages
-├── public/             # public pages such as login
-├── includes/           # shared layout and auth helpers
-├── config/             # database configuration
-├── database/           # SQL scripts
-├── uploads/            # uploaded files
-├── Images/             # branding images
-└── README.md           # project documentation
+├── admin/                # admin pages
+├── student/              # student portal pages
+├── public/               # public pages such as home/about/contact/login
+├── includes/             # shared layout and auth helpers
+├── config/               # database and environment configuration
+├── assets/               # CSS and front-end assets
+├── uploads/              # uploaded PDF resources and quiz images
+├── Images/               # branding/logo assets
+└── README.md             # project documentation
 ```
 
-## Setup Instructions
+## 6. Core Application Modules
 
-### 1. Prepare the database
-Create a MySQL database and import the SQL schema file from the database folder, then optionally run the dummy content SQL file for sample data.
+### 6.1 Public Pages
+The public experience is available to anyone without authentication.
 
-### 2. Configure database connection
-Update the database credentials in:
+Pages include:
+- Home
+- About
+- Contact
+- Login
 
-- [config/database.php](config/database.php)
+These pages are designed to act as a simple entrance point into the LMS and provide a professional public-facing presence.
 
-### 3. Start the project locally
-Place the project inside your local web server root such as WAMP and open the login page through your browser.
+### 6.2 Admin Pages
+The admin area is restricted to users with the admin role.
 
-### 4. Login
-Default admin credentials:
+Available admin modules:
+- Dashboard
+- Students
+- Groups
+- Lectures
+- Resources
+- Quizzes
 
-- username: admin
-- password: password
+Admin users can manage the full learning content lifecycle from one panel.
 
-## Design Notes
+### 6.3 Student Pages
+The student area is restricted to users with the student role.
 
-The project follows a clean and minimal design philosophy:
+Available student modules:
+- Dashboard
+- Lectures
+- Resources
+- Quizzes
+- Change Password
 
-- professional academic look
-- simple navigation
-- responsive layouts where applicable
-- no unnecessary animations or clutter
+Students only see content assigned to their group.
 
-## Future Enhancements
+## 7. Authentication and Authorization Model
 
-Possible future improvements include:
+Authentication is handled through the shared auth helper in the includes folder.
+
+### How it works
+- Users log in with a username and password.
+- Passwords are verified using PHP password hashing.
+- A session is created with the user identity and role.
+- The application redirects users to the correct dashboard based on their role.
+
+### Roles
+- admin: full access to the admin panel and management features
+- student: access only to allowed student portal pages and assigned content
+
+### Access control behavior
+- Students can only access lectures, resources, and quizzes assigned to their group.
+- Admin users can manage all content regardless of group.
+
+## 8. Database Design
+
+The system uses a MySQL database with the following main tables:
+
+### users
+Stores user accounts for admins and students.
+
+Important fields include:
+- id
+- name
+- username
+- password
+- phone
+- parent_phone
+- group_id
+- role
+- status
+
+### groups
+Stores learning groups.
+
+Used to control student access to lectures, resources, and quizzes.
+
+### lectures
+Stores lecture records.
+
+Contains:
+- title
+- description
+- drive_folder_id
+- display_order
+- status
+
+### lecture_folder_access
+Links lectures to the groups that should be able to view them.
+
+### resources
+Stores PDF resource records.
+
+Contains:
+- title
+- description
+- pdf_path
+- status
+
+### resource_group_access
+Links resources to the groups that can access them.
+
+### quizzes
+Stores quiz metadata.
+
+Contains:
+- title
+- group_id
+- status
+- time_limit_minutes
+- max_attempts
+
+### quiz_group_access
+Links quizzes to the groups that can access them.
+
+### questions
+Stores MCQ questions for each quiz.
+
+Contains:
+- question
+- choice_1 to choice_4
+- correct_answer
+- image_path
+
+### quiz_attempts
+Tracks student quiz submissions and scores.
+
+### quiz_extra_attempts
+Stores admin-granted extra quiz attempts for specific students.
+
+## 9. Core Workflows
+
+### 9.1 Admin Workflow
+An admin user can:
+
+1. Create student accounts and assign them to a group.
+2. Create learning groups such as Basic, Advanced 1, and Advanced 2.
+3. Add lectures and connect them to one or more groups.
+4. Upload PDF resources and assign them to groups.
+5. Create quizzes with multiple questions and correct answers.
+6. Set time limits and maximum attempts for quizzes.
+7. Grant extra attempts to students when needed.
+
+### 9.2 Student Workflow
+A student user can:
+
+1. Log in to the student portal.
+2. View lectures assigned to their group.
+3. Open lecture content through the lecture viewer.
+4. Download or view PDF resources assigned to their group.
+5. Start and complete quizzes available for their group.
+6. Change their password.
+
+## 10. Lecture Handling
+
+Lectures are intended to be hosted externally, typically through Google Drive.
+
+The admin can enter:
+- a Google Drive folder URL
+- a Google Drive file URL
+- a direct video URL
+- a simple Drive folder ID
+
+The student lecture player then attempts to display the content appropriately. This keeps storage usage low and makes the system easier to maintain.
+
+## 11. Resource Handling
+
+Resources are PDF files uploaded by the admin.
+
+They are stored in the uploads/pdfs folder and linked to one or more groups. Students only see resources allowed for their own group.
+
+The current implementation validates:
+- file type (PDF only)
+- file size (maximum 20MB)
+- upload success
+
+## 12. Quiz Handling
+
+The quiz system is currently a simple MCQ implementation.
+
+### Supported features
+- multiple questions per quiz
+- four answer choices per question
+- correct answer selection
+- optional question images
+- group-based quiz availability
+- time-limit support
+- attempt-limit support
+- extra-attempt overrides from admin
+
+### Student quiz behavior
+- Students can start an attempt.
+- They may continue an in-progress attempt.
+- The system uses the selected answers to calculate a score.
+- Results are stored in the quiz_attempts table.
+
+## 13. Installation and Setup
+
+### Prerequisites
+- PHP 8+
+- MySQL / MariaDB
+- Apache server (WAMP/XAMPP recommended on Windows)
+
+### Setup Steps
+1. Place the project in your local web server directory, for example:
+   - C:\wamp64\www\Eyad_LMS
+
+2. Create a MySQL database, for example:
+   - eyad_lms
+
+3. Configure the database connection in config/database.php or by setting environment variables:
+   - DB_HOST
+   - DB_USER
+   - DB_PASS
+   - DB_NAME
+
+4. Start Apache and MySQL.
+
+5. Open the project in the browser:
+   - http://localhost/Eyad_LMS/public/index.php
+
+6. Create an initial admin account in the users table with role = admin.
+
+### Note on database initialization
+The application uses CREATE TABLE IF NOT EXISTS statements in several admin pages, so many database tables can be created automatically when those pages are first accessed. A formal SQL dump is not required for the basic setup flow.
+
+## 14. Configuration Notes
+
+The main database configuration is defined in config/database.php.
+
+The file currently uses:
+- environment variables when available
+- fallback values for local development
+
+If your local setup uses a different username, password, or database name, update the values there accordingly.
+
+## 15. File Uploads and Storage
+
+Uploaded files are stored under the uploads folder:
+
+- uploads/pdfs for resource PDFs
+- uploads/quizzes for quiz question images
+
+These directories should be writable by the web server.
+
+## 16. Security Notes
+
+The current implementation includes several basic security practices:
+
+- password hashing for user credentials
+- session-based login checks
+- role-based access restrictions
+- file validation for uploaded PDFs and images
+
+However, the project is still a lightweight educational portal and should be hardened further before production use in a public environment.
+
+## 17. Current Limitations
+
+This version intentionally stays simple. It does not currently include:
+
+- self-registration
+- email verification
+- online payments
+- advanced analytics
+- live video streaming
+- complex grading rules
+- fully expanded permissions beyond admin/student roles
+
+## 18. Deployment Checklist
+
+Before deploying the project to a live server, confirm the following:
+
+- the database connection is correct
+- the uploads folders are writable
+- PHP extensions needed for file handling and MySQL are enabled
+- the site is served over HTTPS
+- admin credentials are created securely
+- student content access is tested end to end
+
+## 19. Future Enhancements
+
+The current implementation can be extended in many ways, including:
 
 - progress tracking
 - certificates
-- notifications
-- homework submission
-- live classes
 - attendance tracking
+- homework submission
+- notifications
+- discussion boards
 - richer analytics
+- multi-teacher support
 - more advanced quiz behavior
 
-## Notes for Development
+## 20. Summary
 
-The current version is intentionally simple and focused on the core educational workflow. The architecture is modular so future versions can extend the platform without a complete rewrite.
+Eyad LMS is now a functional, simple, and practical learning platform for a single instructor. It covers the core education workflow needed for a teacher to manage students, group-based content, lectures, resources, quizzes, and student access in one place.
+

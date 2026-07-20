@@ -54,6 +54,8 @@ if ($quizAttemptsTableResult && $quizAttemptsTableResult->num_rows === 0) {
         student_id INT NOT NULL,
         quiz_id INT NOT NULL,
         score INT NOT NULL DEFAULT 0,
+        total_questions INT NOT NULL DEFAULT 0,
+        score_percent DECIMAL(5,2) NOT NULL DEFAULT 0.00,
         submitted_at TIMESTAMP NULL DEFAULT NULL,
         started_at TIMESTAMP NULL DEFAULT NULL,
         status VARCHAR(20) NOT NULL DEFAULT 'submitted',
@@ -70,6 +72,16 @@ if ($quizAttemptsTableResult && $quizAttemptsTableResult->num_rows === 0) {
     $quizAttemptStatusResult = $conn->query("SHOW COLUMNS FROM quiz_attempts LIKE 'status'");
     if ($quizAttemptStatusResult && $quizAttemptStatusResult->num_rows === 0) {
         $conn->query("ALTER TABLE quiz_attempts ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'submitted'");
+    }
+
+    $quizAttemptTotalQuestionsResult = $conn->query("SHOW COLUMNS FROM quiz_attempts LIKE 'total_questions'");
+    if ($quizAttemptTotalQuestionsResult && $quizAttemptTotalQuestionsResult->num_rows === 0) {
+        $conn->query('ALTER TABLE quiz_attempts ADD COLUMN total_questions INT NOT NULL DEFAULT 0');
+    }
+
+    $quizAttemptScorePercentResult = $conn->query("SHOW COLUMNS FROM quiz_attempts LIKE 'score_percent'");
+    if ($quizAttemptScorePercentResult && $quizAttemptScorePercentResult->num_rows === 0) {
+        $conn->query('ALTER TABLE quiz_attempts ADD COLUMN score_percent DECIMAL(5,2) NOT NULL DEFAULT 0.00');
     }
 }
 
@@ -295,6 +307,7 @@ while ($quizOption = $quizSelectResult->fetch_assoc()) {
     $quizOptions[] = $quizOption;
 }
 $extraAttemptsResult = $conn->query('SELECT qea.id, q.title AS quiz_title, u.name AS student_name, u.username, qea.extra_attempts, qea.reason, qea.created_at FROM quiz_extra_attempts qea INNER JOIN quizzes q ON q.id = qea.quiz_id INNER JOIN users u ON u.id = qea.student_id ORDER BY qea.created_at DESC');
+$attemptsSummaryResult = $conn->query('SELECT qa.id, qa.student_id, u.name AS student_name, u.username, q.title AS quiz_title, qa.score, qa.total_questions, qa.score_percent, qa.status, qa.submitted_at FROM quiz_attempts qa INNER JOIN users u ON u.id = qa.student_id INNER JOIN quizzes q ON q.id = qa.quiz_id ORDER BY qa.submitted_at DESC, qa.id DESC LIMIT 100');
 
 $editingQuiz = null;
 $editingQuestions = [];
@@ -341,11 +354,17 @@ if ($editingQuizId > 0) {
         <p class="text-muted">Create simple MCQ quizzes and assign them to one or more groups.</p>
 
         <?php if ($success !== ''): ?>
-            <div class="alert alert-success"><?php echo htmlspecialchars($success, ENT_QUOTES, 'UTF-8'); ?></div>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <?php echo htmlspecialchars($success, ENT_QUOTES, 'UTF-8'); ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
         <?php endif; ?>
 
         <?php if ($error !== ''): ?>
-            <div class="alert alert-danger"><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></div>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
         <?php endif; ?>
 
         <div class="card mb-4">

@@ -71,11 +71,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="card shadow-sm section-card">
                     <div class="card-body p-4">
                         <?php if ($successMessage !== ''): ?>
-                            <div class="alert alert-success"><?php echo htmlspecialchars($successMessage, ENT_QUOTES, 'UTF-8'); ?></div>
+                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                <?php echo htmlspecialchars($successMessage, ENT_QUOTES, 'UTF-8'); ?>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
                         <?php endif; ?>
 
                         <?php if ($errorMessage !== ''): ?>
-                            <div class="alert alert-danger"><?php echo htmlspecialchars($errorMessage, ENT_QUOTES, 'UTF-8'); ?></div>
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <?php echo htmlspecialchars($errorMessage, ENT_QUOTES, 'UTF-8'); ?>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
                         <?php endif; ?>
 
                         <form method="post">

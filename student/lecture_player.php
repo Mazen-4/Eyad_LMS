@@ -4,7 +4,10 @@ require_once __DIR__ . '/../includes/auth.php';
 $user = requireLogin(['student']);
 $conn = getDbConnection();
 
-$studentGroupId = (int)($user['group_id'] ?? 0);
+$studentGroupIds = array_values(array_unique(array_filter(array_map('intval', $user['group_ids'] ?? []))));
+if (empty($studentGroupIds) && !empty($user['group_id'])) {
+    $studentGroupIds = [(int)$user['group_id']];
+}
 $lectureId = (int)($_GET['lecture_id'] ?? 0);
 $error = '';
 $lecture = null;
@@ -61,15 +64,17 @@ function resolveLectureSource($value)
     return ['type' => 'unsupported', 'url' => $value];
 }
 
-if ($lectureId > 0 && $studentGroupId > 0) {
-    $lectureStmt = $conn->prepare('SELECT l.id, l.title, l.description, l.drive_folder_id FROM lectures l INNER JOIN lecture_folder_access lfa ON lfa.lecture_id = l.id WHERE l.id = ? AND l.status = "active" AND lfa.group_id = ? LIMIT 1');
-    $lectureStmt->bind_param('ii', $lectureId, $studentGroupId);
+if ($lectureId > 0 && !empty($studentGroupIds)) {
+    $placeholders = implode(', ', array_fill(0, count($studentGroupIds), '?'));
+    $lectureStmt = $conn->prepare('SELECT l.id, l.title, l.description, l.drive_folder_id FROM lectures l INNER JOIN lecture_folder_access lfa ON lfa.lecture_id = l.id WHERE l.id = ? AND l.status = "active" AND lfa.group_id IN (' . $placeholders . ') LIMIT 1');
+    $params = array_merge([(int)$lectureId], $studentGroupIds);
+    bindPreparedParams($lectureStmt, $params);
     $lectureStmt->execute();
     $lecture = $lectureStmt->get_result()->fetch_assoc();
 }
 
 if (!$lecture) {
-    $error = 'This lecture is not available for your group.';
+    $error = 'This session is not available for your group.';
 } else {
     $lectureSource = resolveLectureSource($lecture['drive_folder_id'] ?? '');
     $sourceType = $lectureSource['type'];
@@ -81,7 +86,7 @@ if (!$lecture) {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Lecture Player</title>
+    <title>Session Player</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="../assets/css/theme.css" rel="stylesheet">
     <style>
@@ -107,7 +112,7 @@ if (!$lecture) {
     <?php include __DIR__ . '/../includes/student_nav.php'; ?>
 
     <div class="container py-4">
-        <a href="lectures.php" class="btn btn-outline-secondary mb-3">&larr; Back to Lectures</a>
+        <a href="lectures.php" class="btn btn-outline-secondary mb-3">&larr; Back to Sessions</a>
 
         <?php if ($error !== ''): ?>
             <div class="alert alert-danger"><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></div>
@@ -128,20 +133,20 @@ if (!$lecture) {
                         <iframe class="player-frame" src="<?php echo htmlspecialchars($sourceUrl, ENT_QUOTES, 'UTF-8'); ?>" allow="autoplay; fullscreen" allowfullscreen></iframe>
                     <?php elseif ($sourceType === 'drive_file' && $sourceUrl !== ''): ?>
                         <iframe class="player-frame" src="<?php echo htmlspecialchars($sourceUrl, ENT_QUOTES, 'UTF-8'); ?>" allow="autoplay; fullscreen" allowfullscreen frameborder="0"></iframe>
-                        <a href="<?php echo htmlspecialchars($sourceUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" class="btn btn-outline-primary mt-3">Open source in Drive</a>
+                        <!-- <a href="<?php echo htmlspecialchars($sourceUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" class="btn btn-outline-primary mt-3">Open source in Drive</a> -->
                     <?php elseif ($sourceType === 'folder' && $sourceUrl !== ''): ?>
                         <div class="alert alert-warning">
-                            This lecture source points to a Drive folder, which cannot be embedded directly in this player. Please use a direct video file link or a public Drive file link instead.
+                            This session source points to a Drive folder, which cannot be embedded directly in this player. Please use a direct video file link or a public Drive file link instead.
                         </div>
-                        <a href="<?php echo htmlspecialchars($sourceUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" class="btn btn-outline-primary">Open source in Drive</a>
+                        <!-- <a href="<?php echo htmlspecialchars($sourceUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" class="btn btn-outline-primary">Open source in Drive</a> -->
                     <?php elseif ($sourceType === 'link' && $sourceUrl !== ''): ?>
                         <div class="alert alert-info">
-                            A lecture source was found, but it needs to be shared publicly or opened directly. Use the button below to access it.
+                            A session source was found, but it needs to be shared publicly or opened directly. Use the button below to access it.
                         </div>
                         <a href="<?php echo htmlspecialchars($sourceUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" class="btn btn-outline-primary">Open lecture source</a>
                     <?php else: ?>
                         <div class="alert alert-info">
-                            This lecture does not have a video source yet. The admin can add a direct video link or upload a file later.
+                            This session does not have a video source yet. The admin can add a direct video link or upload a file later.
                         </div>
                     <?php endif; ?>
                 </div>

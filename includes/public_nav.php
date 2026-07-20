@@ -19,7 +19,7 @@ if (isLoggedIn()) {
     <div class="container">
         <a class="navbar-brand d-flex align-items-center" href="index.php">
             <img src="../Images/eyad_logo1.jpeg" alt="Eyad LMS Logo" style="height: 54px; width: 54px; margin-right: 10px; object-fit: cover; border-radius: 50%; border: 2px solid rgba(255,255,255,0.9); box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-            <span>Eyad LMS</span>
+            <span>Eng. Eyad Mazhar</span>
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#publicNav">
             <span class="navbar-toggler-icon"></span>

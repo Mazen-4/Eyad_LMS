@@ -139,7 +139,7 @@ if ($editingLectureId > 0) {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Lectures - Admin</title>
+    <title>Sessions - Admin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="../assets/css/theme.css" rel="stylesheet">
 </head>
@@ -147,20 +147,26 @@ if ($editingLectureId > 0) {
     <?php include __DIR__ . '/../includes/admin_nav.php'; ?>
 
     <div class="container py-4">
-        <h1 class="mb-3">Lectures</h1>
-        <p class="text-muted">Create lectures and link them to the groups that should access them.</p>
+        <h1 class="mb-3">Sessions</h1>
+        <p class="text-muted">Create sessions and link them to the groups that should access them.</p>
 
         <?php if ($success !== ''): ?>
-            <div class="alert alert-success"><?php echo htmlspecialchars($success, ENT_QUOTES, 'UTF-8'); ?></div>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <?php echo htmlspecialchars($success, ENT_QUOTES, 'UTF-8'); ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
         <?php endif; ?>
 
         <?php if ($error !== ''): ?>
-            <div class="alert alert-danger"><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></div>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
         <?php endif; ?>
 
         <div class="card mb-4">
             <div class="card-body">
-                <h5 class="card-title"><?php echo $editingLecture ? 'Edit Lecture' : 'Add Lecture'; ?></h5>
+                <h5 class="card-title"><?php echo $editingLecture ? 'Edit Session' : 'Add Session'; ?></h5>
                 <form method="post" class="row g-3">
                     <input type="hidden" name="action" value="<?php echo $editingLecture ? 'edit' : 'create'; ?>">
                     <?php if ($editingLecture): ?>
@@ -206,7 +212,7 @@ if ($editingLectureId > 0) {
                         </div>
                     </div>
                     <div class="col-12">
-                        <button type="submit" class="btn btn-primary"><?php echo $editingLecture ? 'Update Lecture' : 'Save Lecture'; ?></button>
+                        <button type="submit" class="btn btn-primary"><?php echo $editingLecture ? 'Update Session' : 'Save Session'; ?></button>
                         <?php if ($editingLecture): ?>
                             <a href="lectures.php" class="btn btn-outline-secondary ms-2">Cancel</a>
                         <?php endif; ?>
@@ -217,7 +223,7 @@ if ($editingLectureId > 0) {
 
         <div class="card">
             <div class="card-body">
-                <h5 class="card-title">Existing Lectures</h5>
+                <h5 class="card-title">Existing Sessions</h5>
                 <div class="table-responsive">
                     <table class="table table-striped align-middle">
                         <thead>
@@ -262,12 +268,12 @@ if ($editingLectureId > 0) {
                                         <td><?php echo htmlspecialchars(formatDisplayDateTime($lecture['created_at']), ENT_QUOTES, 'UTF-8'); ?></td>
                                         <td>
                                             <a href="lectures.php?edit=<?php echo (int)$lecture['id']; ?>" class="btn btn-sm btn-outline-primary">Edit</a>
-                                            <a href="lectures.php?delete=<?php echo (int)$lecture['id']; ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this lecture and its group access links?');">Delete</a>
+                                            <a href="lectures.php?delete=<?php echo (int)$lecture['id']; ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this session and its group access links?');">Delete</a>
                                         </td>
                                     </tr>
                                 <?php endwhile; ?>
                             <?php else: ?>
-                                <tr><td colspan="6" class="text-muted">No lectures created yet.</td></tr>
+                                <tr><td colspan="6" class="text-muted">No sessions created yet.</td></tr>
                             <?php endif; ?>
                         </tbody>
                     </table>

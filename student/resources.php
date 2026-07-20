@@ -4,11 +4,16 @@ require_once __DIR__ . '/../includes/auth.php';
 $user = requireLogin(['student']);
 $conn = getDbConnection();
 
-$studentGroupId = (int)($user['group_id'] ?? 0);
+$studentGroupIds = array_values(array_unique(array_filter(array_map('intval', $user['group_ids'] ?? []))));
+if (empty($studentGroupIds) && !empty($user['group_id'])) {
+    $studentGroupIds = [(int)$user['group_id']];
+}
 
-if ($studentGroupId > 0) {
-    $resourcesStmt = $conn->prepare('SELECT DISTINCT r.id, r.title, r.description, r.pdf_path FROM resources r LEFT JOIN resource_group_access rga ON rga.resource_id = r.id WHERE r.status = "active" AND (r.group_id = ? OR rga.group_id = ?) ORDER BY r.created_at DESC');
-    $resourcesStmt->bind_param('ii', $studentGroupId, $studentGroupId);
+if (!empty($studentGroupIds)) {
+    $placeholders = implode(', ', array_fill(0, count($studentGroupIds), '?'));
+    $resourcesStmt = $conn->prepare('SELECT DISTINCT r.id, r.title, r.description, r.pdf_path FROM resources r LEFT JOIN resource_group_access rga ON rga.resource_id = r.id WHERE r.status = "active" AND (r.group_id IN (' . $placeholders . ') OR rga.group_id IN (' . $placeholders . ')) ORDER BY r.created_at DESC');
+    $params = array_merge($studentGroupIds, $studentGroupIds);
+    bindPreparedParams($resourcesStmt, $params);
     $resourcesStmt->execute();
     $resourcesResult = $resourcesStmt->get_result();
 } else {

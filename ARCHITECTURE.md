@@ -147,6 +147,22 @@ Lectures are organized in Google Drive folders. The admin assigns one or more gr
 
 ---
 
+# Phase 2 Client Requirements
+
+The following requirements should be treated as part of the next implementation phase:
+
+- Rename the content area from "Lectures" to "Sessions" in the interface and navigation
+- Update the branding in the navbar to show "Eng. Eyad Mazhar" instead of "Eyad LMS"
+- Allow students to belong to multiple groups for broader access control
+- Enforce a limit on the number of devices that can access one account
+- Support multiple admin accounts with role-based permissions
+- Provide quiz review functionality with attempt history and score visibility
+- Remove the button that opens the lecture in Google Drive from the lecture page
+- Automatically convert uploaded Google Drive links into the correct preview/embed format
+- Improve lecture security by tracking view attempts and preventing recording or screenshot capture where technically feasible
+
+---
+
 # Module Structure
 
 Public Website

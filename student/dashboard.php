@@ -22,9 +22,9 @@ $user = requireLogin(['student']);
             <div class="col-12 col-md-4">
                 <div class="card h-100 shadow-sm">
                     <div class="card-body">
-                        <h5 class="card-title">Lectures</h5>
-                        <p class="card-text">View lectures assigned to your group.</p>
-                        <a href="lectures.php" class="btn btn-outline-primary btn-sm">Open Lectures</a>
+                        <h5 class="card-title">Sessions</h5>
+                        <p class="card-text">View sessions assigned to your group.</p>
+                        <a href="lectures.php" class="btn btn-outline-primary btn-sm">Open Sessions</a>
                     </div>
                 </div>
             </div>

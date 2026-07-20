@@ -7,7 +7,7 @@ if (!isset($user)) {
     <div class="container">
         <a class="navbar-brand d-flex align-items-center" href="dashboard.php">
             <img src="../Images/eyad_logo1.jpeg" alt="Eyad LMS Logo" style="height: 54px; width: 54px; margin-right: 10px; object-fit: cover; border-radius: 50%; border: 2px solid rgba(255,255,255,0.9); box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-            <span>Eyad LMS Student</span>
+            <span>Eng. Eyad Mazhar</span>
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#studentNav">
             <span class="navbar-toggler-icon"></span>
@@ -15,7 +15,7 @@ if (!isset($user)) {
         <div class="collapse navbar-collapse" id="studentNav">
             <ul class="navbar-nav me-auto">
                 <li class="nav-item"><a class="nav-link" href="dashboard.php">Dashboard</a></li>
-                <li class="nav-item"><a class="nav-link" href="lectures.php">Lectures</a></li>
+                <li class="nav-item"><a class="nav-link" href="lectures.php">Sessions</a></li>
                 <li class="nav-item"><a class="nav-link" href="resources.php">Resources</a></li>
                 <li class="nav-item"><a class="nav-link" href="quizzes.php">Quizzes</a></li>
             </ul>

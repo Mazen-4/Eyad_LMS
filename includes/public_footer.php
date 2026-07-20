@@ -18,7 +18,7 @@ if (isLoggedIn()) {
     <div class="container py-4">
         <div class="row g-4 align-items-start">
             <div class="col-lg-4">
-                <h5 class="fw-bold mb-2">Eyad LMS</h5>
+                <h5 class="fw-bold mb-2">Eng. Eyad Mazhar</h5>
                 <p class="mb-0 text-muted">A modern, secure learning platform for Eng. Eyad Mazhar and his students.</p>
             </div>
             <div class="col-sm-6 col-lg-4">
@@ -40,7 +40,7 @@ if (isLoggedIn()) {
             </div>
         </div>
         <div class="border-top mt-4 pt-3 small text-muted">
-            © <?php echo date('Y'); ?> Eyad LMS. All rights reserved.
+            © <?php echo date('Y'); ?> Eng. Eyad Mazhar. All rights reserved.
         </div>
     </div>
 </footer>
