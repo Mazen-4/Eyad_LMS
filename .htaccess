@@ -1,0 +1,2 @@
+# This project uses direct PHP entry files for compatibility.
+# No rewrite rules are required for local WAMP or Hostinger.

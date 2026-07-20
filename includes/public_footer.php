@@ -7,6 +7,10 @@ if ($publicRoot === '') {
     $publicRoot = '/public';
 }
 $footerLink = "{$publicRoot}/login.php";
+$publicRoot = rtrim($publicRoot, '/');
+if ($publicRoot === '') {
+    $publicRoot = '/';
+}
 $footerLabel = 'Login';
 if (isLoggedIn()) {
     $user = currentUser();

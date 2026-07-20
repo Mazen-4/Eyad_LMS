@@ -3,6 +3,10 @@ require_once __DIR__ . '/../config/database.php';
 
 function ensureUserGroupAccessTable() {
     $conn = getDbConnection();
+    if ($conn === null) {
+        return;
+    }
+
     $conn->query("CREATE TABLE IF NOT EXISTS user_group_access (
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id INT NOT NULL,
@@ -36,6 +40,10 @@ function getUserGroupIds($userId, $conn = null) {
     }
 
     $conn = $conn ?: getDbConnection();
+    if ($conn === null) {
+        return [];
+    }
+
     $groupIds = [];
 
     $primaryGroupStmt = $conn->prepare('SELECT group_id FROM users WHERE id = ? LIMIT 1');
@@ -98,7 +106,12 @@ function requireLogin($allowedRoles = []) {
 }
 
 function authenticateUser($username, $password) {
-    $stmt = getDbConnection()->prepare('SELECT * FROM users WHERE username = ? LIMIT 1');
+    $conn = getDbConnection();
+    if ($conn === null) {
+        return null;
+    }
+
+    $stmt = $conn->prepare('SELECT * FROM users WHERE username = ? LIMIT 1');
     $stmt->bind_param('s', $username);
     $stmt->execute();
 
