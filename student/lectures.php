@@ -1,9 +1,10 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
 
-$user = requireLogin(['student']);
+$user = requireLogin(['student', 'admin']);
 $conn = getDbConnection();
 
+$isAdmin = ($user['role'] === 'admin');
 $studentGroupIds = array_values(array_unique(array_filter(array_map('intval', $user['group_ids'] ?? []))));
 if (empty($studentGroupIds) && !empty($user['group_id'])) {
     $studentGroupIds = [(int)$user['group_id']];
@@ -42,7 +43,7 @@ function normalizeDriveLink($value)
     return $value;
 }
 
-if (!empty($studentGroupIds)) {
+if (!empty($studentGroupIds) && !$isAdmin) {
     $placeholders = implode(', ', array_fill(0, count($studentGroupIds), '?'));
     $lecturesStmt = $conn->prepare('SELECT l.id, l.title, l.description, l.drive_folder_id, l.display_order FROM lectures l INNER JOIN lecture_folder_access lfa ON lfa.lecture_id = l.id WHERE l.status = "active" AND lfa.group_id IN (' . $placeholders . ') ORDER BY l.display_order, l.id');
     bindPreparedParams($lecturesStmt, $studentGroupIds);

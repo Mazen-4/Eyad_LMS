@@ -1,15 +1,16 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
 
-$user = requireLogin(['student']);
+$user = requireLogin(['student', 'admin']);
 $conn = getDbConnection();
 
+$isAdmin = ($user['role'] === 'admin');
 $studentGroupIds = array_values(array_unique(array_filter(array_map('intval', $user['group_ids'] ?? []))));
 if (empty($studentGroupIds) && !empty($user['group_id'])) {
     $studentGroupIds = [(int)$user['group_id']];
 }
 
-if (!empty($studentGroupIds)) {
+if (!empty($studentGroupIds) && !$isAdmin) {
     $placeholders = implode(', ', array_fill(0, count($studentGroupIds), '?'));
     $resourcesStmt = $conn->prepare('SELECT DISTINCT r.id, r.title, r.description, r.pdf_path FROM resources r LEFT JOIN resource_group_access rga ON rga.resource_id = r.id WHERE r.status = "active" AND (r.group_id IN (' . $placeholders . ') OR rga.group_id IN (' . $placeholders . ')) ORDER BY r.created_at DESC');
     $params = array_merge($studentGroupIds, $studentGroupIds);

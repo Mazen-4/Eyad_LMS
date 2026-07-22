@@ -61,11 +61,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         <form method="post">
                             <div class="mb-3">
-                                <label class="form-label fw-semibold" style="color: #f8fafc;">Username</label>
+                                <label class="form-label fw-semibold" style="color: var(--text);">Username</label>
                                 <input type="text" name="username" class="form-control" required>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label fw-semibold" style="color: #f8fafc;">Password</label>
+                                <label class="form-label fw-semibold" style="color: var(--text);">Password</label>
                                 <input type="password" name="password" class="form-control" required>
                             </div>
                             <button type="submit" class="btn btn-primary w-100">Login</button>

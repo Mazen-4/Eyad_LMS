@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
 
-$user = requireLogin(['student']);
+$user = requireLogin(['student', 'admin']);
 $conn = getDbConnection();
 
 $quizAttemptsTableResult = $conn->query("SHOW TABLES LIKE 'quiz_attempts'");
@@ -42,12 +42,28 @@ if ($quizAttemptsTableResult && $quizAttemptsTableResult->num_rows === 0) {
     }
 }
 
+$quizAttemptAnswersTableResult = $conn->query("SHOW TABLES LIKE 'quiz_attempt_answers'");
+if ($quizAttemptAnswersTableResult && $quizAttemptAnswersTableResult->num_rows === 0) {
+    $conn->query("CREATE TABLE quiz_attempt_answers (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        attempt_id INT NOT NULL,
+        question_id INT NOT NULL,
+        selected_answer VARCHAR(10) DEFAULT NULL,
+        is_correct TINYINT(1) NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        KEY attempt_id (attempt_id),
+        KEY question_id (question_id)
+    )");
+}
+
+$isAdmin = ($user['role'] === 'admin');
 $studentGroupIds = array_values(array_unique(array_filter(array_map('intval', $user['group_ids'] ?? []))));
 if (empty($studentGroupIds) && !empty($user['group_id'])) {
     $studentGroupIds = [(int)$user['group_id']];
 }
 $success = '';
 $error = '';
+$reviewAttemptId = 0;
 
 function expireTimedOutAttempts($conn, $studentId, $quizId = null) {
     if ($quizId !== null) {
@@ -108,19 +124,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        if (!empty($studentGroupIds)) {
+        if ($isAdmin) {
+            $quizCheck = $conn->prepare('SELECT id, time_limit_minutes, max_attempts FROM quizzes WHERE id = ? AND status = "active" LIMIT 1');
+            $quizCheck->bind_param('i', $quizId);
+            $quizCheck->execute();
+            $quiz = $quizCheck->get_result()->fetch_assoc();
+        } elseif (!empty($studentGroupIds)) {
             $placeholders = implode(', ', array_fill(0, count($studentGroupIds), '?'));
             $quizCheck = $conn->prepare('SELECT id, time_limit_minutes, max_attempts FROM quizzes WHERE id = ? AND group_id IN (' . $placeholders . ') AND status = "active" LIMIT 1');
             $params = array_merge([$quizId], $studentGroupIds);
             bindPreparedParams($quizCheck, $params);
             $quizCheck->execute();
             $quiz = $quizCheck->get_result()->fetch_assoc();
-        } else {
-            $quiz = null;
-        }
 
-        if (!$quiz) {
-            if (!empty($studentGroupIds)) {
+            if (!$quiz) {
                 $placeholders = implode(', ', array_fill(0, count($studentGroupIds), '?'));
                 $quizCheck = $conn->prepare('SELECT q.id, q.time_limit_minutes, q.max_attempts FROM quizzes q LEFT JOIN quiz_group_access qga ON qga.quiz_id = q.id WHERE q.id = ? AND q.status = "active" AND (q.group_id IN (' . $placeholders . ') OR qga.group_id IN (' . $placeholders . ')) LIMIT 1');
                 $params = array_merge([$quizId], $studentGroupIds, $studentGroupIds);
@@ -128,6 +145,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $quizCheck->execute();
                 $quiz = $quizCheck->get_result()->fetch_assoc();
             }
+        } else {
+            $quiz = null;
         }
 
         if (!$quiz) {
@@ -189,19 +208,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($quizId <= 0) {
         $error = 'Invalid quiz.';
     } else {
-        if (!empty($studentGroupIds)) {
+        if ($isAdmin) {
+            $quizCheck = $conn->prepare('SELECT id, time_limit_minutes, max_attempts FROM quizzes WHERE id = ? AND status = "active" LIMIT 1');
+            $quizCheck->bind_param('i', $quizId);
+            $quizCheck->execute();
+            $quiz = $quizCheck->get_result()->fetch_assoc();
+        } elseif (!empty($studentGroupIds)) {
             $placeholders = implode(', ', array_fill(0, count($studentGroupIds), '?'));
             $quizCheck = $conn->prepare('SELECT id, time_limit_minutes, max_attempts FROM quizzes WHERE id = ? AND group_id IN (' . $placeholders . ') AND status = "active" LIMIT 1');
             $params = array_merge([$quizId], $studentGroupIds);
             bindPreparedParams($quizCheck, $params);
             $quizCheck->execute();
             $quiz = $quizCheck->get_result()->fetch_assoc();
-        } else {
-            $quiz = null;
-        }
 
-        if (!$quiz) {
-            if (!empty($studentGroupIds)) {
+            if (!$quiz) {
                 $placeholders = implode(', ', array_fill(0, count($studentGroupIds), '?'));
                 $quizCheck = $conn->prepare('SELECT q.id, q.time_limit_minutes, q.max_attempts FROM quizzes q LEFT JOIN quiz_group_access qga ON qga.quiz_id = q.id WHERE q.id = ? AND q.status = "active" AND (q.group_id IN (' . $placeholders . ') OR qga.group_id IN (' . $placeholders . ')) LIMIT 1');
                 $params = array_merge([$quizId], $studentGroupIds, $studentGroupIds);
@@ -209,6 +229,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $quizCheck->execute();
                 $quiz = $quizCheck->get_result()->fetch_assoc();
             }
+        } else {
+            $quiz = null;
         }
 
         if (!$quiz) {
@@ -255,12 +277,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     $score = 0;
                     $total = 0;
+                    $questionRows = [];
                     while ($question = $questions->fetch_assoc()) {
                         $total++;
                         $selected = trim($answers[$question['id']] ?? '');
-                        if ($selected !== '' && $selected === $question['correct_answer']) {
+                        $isCorrect = ($selected !== '' && $selected === $question['correct_answer']);
+                        if ($isCorrect) {
                             $score++;
                         }
+                        $questionRows[] = [
+                            'id' => (int)$question['id'],
+                            'selected' => $selected,
+                            'correct_answer' => $question['correct_answer'],
+                            'is_correct' => $isCorrect ? 1 : 0,
+                        ];
                     }
 
                     $scorePercent = $total > 0 ? round(($score / $total) * 100, 2) : 0.00;
@@ -271,13 +301,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $activeAttempt = $activeAttemptStmt->get_result()->fetch_assoc();
 
                     if ($activeAttempt) {
+                        $attemptId = (int)$activeAttempt['id'];
                         $updateAttempt = $conn->prepare('UPDATE quiz_attempts SET score = ?, total_questions = ?, score_percent = ?, submitted_at = NOW(), started_at = ?, status = "submitted" WHERE id = ?');
-                        $updateAttempt->bind_param('iidsi', $score, $total, $scorePercent, $startedAt, $activeAttempt['id']);
+                        $updateAttempt->bind_param('iidsi', $score, $total, $scorePercent, $startedAt, $attemptId);
                         $updateAttempt->execute();
                     } else {
                         $insertAttempt = $conn->prepare('INSERT INTO quiz_attempts (student_id, quiz_id, score, total_questions, score_percent, submitted_at, started_at, status) VALUES (?, ?, ?, ?, ?, NOW(), ?, "submitted")');
                         $insertAttempt->bind_param('iiiids', $user['id'], $quizId, $score, $total, $scorePercent, $startedAt);
                         $insertAttempt->execute();
+                        $attemptId = $insertAttempt->insert_id;
+                    }
+
+                    if (!empty($attemptId)) {
+                        $deleteAnswersStmt = $conn->prepare('DELETE FROM quiz_attempt_answers WHERE attempt_id = ?');
+                        $deleteAnswersStmt->bind_param('i', $attemptId);
+                        $deleteAnswersStmt->execute();
+
+                        $insertAnswerStmt = $conn->prepare('INSERT INTO quiz_attempt_answers (attempt_id, question_id, selected_answer, is_correct) VALUES (?, ?, ?, ?)');
+                        foreach ($questionRows as $questionItem) {
+                            $selectedAnswer = $questionItem['selected'];
+                            $isCorrectValue = $questionItem['is_correct'];
+                            $insertAnswerStmt->bind_param('iisi', $attemptId, $questionItem['id'], $selectedAnswer, $isCorrectValue);
+                            $insertAnswerStmt->execute();
+                        }
+
+                        $reviewAttemptId = $attemptId;
                     }
 
                     $success = 'Quiz submitted successfully. Your score: ' . $score . '/' . $total . ' (' . number_format($scorePercent, 2) . '%)';
@@ -288,21 +336,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $activeQuizAttempt = null;
-if (!empty($studentGroupIds)) {
+if (!empty($studentGroupIds) && !$isAdmin) {
     $placeholders = implode(', ', array_fill(0, count($studentGroupIds), '?'));
     $quizzesStmt = $conn->prepare('SELECT DISTINCT q.id, q.title, q.time_limit_minutes, q.max_attempts FROM quizzes q LEFT JOIN quiz_group_access qga ON qga.quiz_id = q.id WHERE q.status = "active" AND (q.group_id IN (' . $placeholders . ') OR qga.group_id IN (' . $placeholders . ')) ORDER BY q.created_at DESC');
     $params = array_merge($studentGroupIds, $studentGroupIds);
     bindPreparedParams($quizzesStmt, $params);
     $quizzesStmt->execute();
     $quizzesResult = $quizzesStmt->get_result();
-
-    $activeAttemptStmt = $conn->prepare('SELECT quiz_id FROM quiz_attempts WHERE student_id = ? AND status = "in_progress" LIMIT 1');
-    $activeAttemptStmt->bind_param('i', $user['id']);
-    $activeAttemptStmt->execute();
-    $activeQuizAttempt = $activeAttemptStmt->get_result()->fetch_assoc();
 } else {
-    $quizzesResult = null;
+    $quizzesResult = $conn->query('SELECT id, title, time_limit_minutes, max_attempts FROM quizzes WHERE status = "active" ORDER BY created_at DESC');
 }
+
+$activeAttemptStmt = $conn->prepare('SELECT quiz_id FROM quiz_attempts WHERE student_id = ? AND status = "in_progress" LIMIT 1');
+$activeAttemptStmt->bind_param('i', $user['id']);
+$activeAttemptStmt->execute();
+$activeQuizAttempt = $activeAttemptStmt->get_result()->fetch_assoc();
 ?>
 <!doctype html>
 <html lang="en">
@@ -325,6 +373,11 @@ if (!empty($studentGroupIds)) {
                 <?php echo htmlspecialchars($success, ENT_QUOTES, 'UTF-8'); ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
+            <?php if ($reviewAttemptId > 0): ?>
+                <div class="mb-3">
+                    <a class="btn btn-success" href="quiz_review.php?attempt_id=<?php echo (int)$reviewAttemptId; ?>">Review Your Quiz Results</a>
+                </div>
+            <?php endif; ?>
         <?php endif; ?>
 
         <?php if ($error !== ''): ?>
@@ -383,12 +436,21 @@ if (!empty($studentGroupIds)) {
                         $quizAttemptState = $quizAttemptStateStmt->get_result()->fetch_assoc();
                         $quizActiveStartedAt = $quizAttemptState['started_at'] ?? '';
                         $quizActiveStatus = $quizAttemptState['status'] ?? '';
+
+                        $latestAttemptStmt = $conn->prepare('SELECT id FROM quiz_attempts WHERE student_id = ? AND quiz_id = ? AND status != "in_progress" ORDER BY submitted_at DESC, id DESC LIMIT 1');
+                        $latestAttemptStmt->bind_param('ii', $user['id'], $quiz['id']);
+                        $latestAttemptStmt->execute();
+                        $latestAttempt = $latestAttemptStmt->get_result()->fetch_assoc();
+                        $latestAttemptId = (int)($latestAttempt['id'] ?? 0);
                         ?>
                         <form method="post" class="mt-3 quiz-form" data-time-limit-minutes="<?php echo (int)($quiz['time_limit_minutes'] ?? 0); ?>" data-active-started-at="<?php echo htmlspecialchars($quizActiveStartedAt, ENT_QUOTES, 'UTF-8'); ?>" data-has-active-attempt="<?php echo ($quizActiveStatus === 'in_progress') ? '1' : '0'; ?>">
                             <input type="hidden" name="quiz_id" value="<?php echo (int)$quiz['id']; ?>">
                             <input type="hidden" name="started_at" class="started-at-input" value="<?php echo htmlspecialchars($quizActiveStartedAt, ENT_QUOTES, 'UTF-8'); ?>">
                             <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
                                 <button type="button" class="btn btn-primary start-quiz-btn" data-quiz-id="<?php echo (int)$quiz['id']; ?>" <?php echo (!empty($activeQuizAttempt) && ((int)($activeQuizAttempt['quiz_id'] ?? 0) !== (int)$quiz['id'])) ? 'disabled' : ''; ?>><?php echo (!empty($activeQuizAttempt) && ((int)($activeQuizAttempt['quiz_id'] ?? 0) === (int)$quiz['id'])) ? 'Continue Attempt' : 'Start Attempt'; ?></button>
+                                <?php if ($latestAttemptId > 0): ?>
+                                    <a class="btn btn-outline-success" href="quiz_review.php?attempt_id=<?php echo $latestAttemptId; ?>">Review Last Attempt</a>
+                                <?php endif; ?>
                                 <button type="button" class="btn btn-outline-secondary toggle-attempts-btn">View Attempts</button>
                                 <span class="quiz-timer text-danger fw-bold d-none"></span>
                             </div>
@@ -430,7 +492,7 @@ if (!empty($studentGroupIds)) {
                             </div>
 
                             <?php
-                            $attemptsStmt = $conn->prepare('SELECT score, total_questions, score_percent, submitted_at, status FROM quiz_attempts WHERE student_id = ? AND quiz_id = ? AND status != "in_progress" ORDER BY submitted_at DESC, id DESC');
+                            $attemptsStmt = $conn->prepare('SELECT id, score, total_questions, score_percent, submitted_at, status FROM quiz_attempts WHERE student_id = ? AND quiz_id = ? AND status != "in_progress" ORDER BY submitted_at DESC, id DESC');
                             $attemptsStmt->bind_param('ii', $user['id'], $quiz['id']);
                             $attemptsStmt->execute();
                             $attemptsResult = $attemptsStmt->get_result();
@@ -447,6 +509,7 @@ if (!empty($studentGroupIds)) {
                                                     <th>Percent</th>
                                                     <th>Status</th>
                                                     <th>Submitted</th>
+                                                    <th>Review</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -458,6 +521,9 @@ if (!empty($studentGroupIds)) {
                                                         <td><?php echo number_format((float)($attempt['score_percent'] ?? 0), 2) . '%'; ?></td>
                                                         <td><?php echo htmlspecialchars($attempt['status'] ?? 'submitted', ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td><?php echo htmlspecialchars(!empty($attempt['submitted_at']) ? formatDisplayDateTime($attempt['submitted_at']) : '-', ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td>
+                                                            <a class="btn btn-sm btn-outline-primary" href="quiz_review.php?attempt_id=<?php echo (int)($attempt['id'] ?? 0); ?>">Review</a>
+                                                        </td>
                                                     </tr>
                                                 <?php endwhile; ?>
                                             </tbody>

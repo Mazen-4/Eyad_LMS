@@ -87,17 +87,57 @@ $user = requireLogin(['admin']);
                     </div>
                 </a>
             </div>
+            <div class="col-md-4">
+                <a href="activity_log.php" class="text-decoration-none text-dark">
+                    <div class="card h-100 shadow-sm hover-shadow">
+                        <div class="card-body">
+                            <h5 class="card-title">Activity Log</h5>
+                            <p class="card-text">View student lecture and quiz activity in one place.</p>
+                            <span class="btn btn-outline-primary btn-sm mt-2">Open Activity Log</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
         </div>
 
-        <div class="row g-3 mt-1">
-            <div class="col-12 col-md-6">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">Public Pages</h5>
-                        <p class="card-text">Open the public About and Contact pages from the admin panel.</p>
-                        <a href="../public/about.php" class="btn btn-outline-secondary btn-sm me-2">About</a>
-                        <a href="../public/contact.php" class="btn btn-outline-secondary btn-sm">Contact</a>
-                    </div>
+        <div class="student-view-section mt-4">
+            <div class="mb-3">
+                <h2 class="h4">Student View</h2>
+                <p class="text-muted mb-0">Preview the content students see from a single admin dashboard.</p>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <a href="../student/lectures.php?preview=1" class="text-decoration-none text-dark">
+                        <div class="card h-100 shadow-sm hover-shadow">
+                            <div class="card-body">
+                                <h5 class="card-title">Sessions Preview</h5>
+                                <p class="card-text">Preview the sessions content exactly as a student sees it.</p>
+                                <span class="btn btn-outline-primary btn-sm mt-2">View Sessions</span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <a href="../student/quizzes.php?preview=1" class="text-decoration-none text-dark">
+                        <div class="card h-100 shadow-sm hover-shadow">
+                            <div class="card-body">
+                                <h5 class="card-title">Quizzes Preview</h5>
+                                <p class="card-text">Preview the quiz listing and content as a student experiences it.</p>
+                                <span class="btn btn-outline-primary btn-sm mt-2">View Quizzes</span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <a href="../student/resources.php?preview=1" class="text-decoration-none text-dark">
+                        <div class="card h-100 shadow-sm hover-shadow">
+                            <div class="card-body">
+                                <h5 class="card-title">Resources Preview</h5>
+                                <p class="card-text">Preview the students' resource library and file links.</p>
+                                <span class="btn btn-outline-primary btn-sm mt-2">View Resources</span>
+                            </div>
+                        </div>
+                    </a>
                 </div>
             </div>
         </div>

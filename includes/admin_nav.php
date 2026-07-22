@@ -21,6 +21,7 @@ if (!isset($user)) {
                 <li class="nav-item"><a class="nav-link" href="lectures.php">Sessions</a></li>
                 <li class="nav-item"><a class="nav-link" href="resources.php">Resources</a></li>
                 <li class="nav-item"><a class="nav-link" href="quizzes.php">Quizzes</a></li>
+                <li class="nav-item"><a class="nav-link" href="activity_log.php">Activity Log</a></li>
             </ul>
             <span class="navbar-text text-white me-3">Welcome, <?php echo htmlspecialchars($user['name'], ENT_QUOTES, 'UTF-8'); ?></span>
             <a class="btn btn-outline-light btn-sm" href="../logout.php">Logout</a>

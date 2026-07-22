@@ -1,9 +1,10 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
 
-$user = requireLogin(['student']);
+$user = requireLogin(['student', 'admin']);
 $conn = getDbConnection();
 
+$isAdmin = ($user['role'] === 'admin');
 $studentGroupIds = array_values(array_unique(array_filter(array_map('intval', $user['group_ids'] ?? []))));
 if (empty($studentGroupIds) && !empty($user['group_id'])) {
     $studentGroupIds = [(int)$user['group_id']];
@@ -110,21 +111,49 @@ function buildVideoProxyUrl($value)
     return 'proxy_media.php?url=' . rawurlencode($value);
 }
 
-if ($lectureId > 0 && !empty($studentGroupIds)) {
-    $placeholders = implode(', ', array_fill(0, count($studentGroupIds), '?'));
-    $lectureStmt = $conn->prepare('SELECT l.id, l.title, l.description, l.drive_folder_id FROM lectures l INNER JOIN lecture_folder_access lfa ON lfa.lecture_id = l.id WHERE l.id = ? AND l.status = "active" AND lfa.group_id IN (' . $placeholders . ') LIMIT 1');
-    $params = array_merge([(int)$lectureId], $studentGroupIds);
-    bindPreparedParams($lectureStmt, $params);
+if ($lectureId > 0) {
+    if ($isAdmin) {
+        $lectureStmt = $conn->prepare('SELECT l.id, l.title, l.description, l.drive_folder_id FROM lectures l WHERE l.id = ? AND l.status = "active" LIMIT 1');
+        $lectureStmt->bind_param('i', $lectureId);
+    } elseif (!empty($studentGroupIds)) {
+        $placeholders = implode(', ', array_fill(0, count($studentGroupIds), '?'));
+        $lectureStmt = $conn->prepare('SELECT l.id, l.title, l.description, l.drive_folder_id FROM lectures l INNER JOIN lecture_folder_access lfa ON lfa.lecture_id = l.id WHERE l.id = ? AND l.status = "active" AND lfa.group_id IN (' . $placeholders . ') LIMIT 1');
+        $params = array_merge([(int)$lectureId], $studentGroupIds);
+        bindPreparedParams($lectureStmt, $params);
+    } else {
+        $lectureStmt = $conn->prepare('SELECT l.id, l.title, l.description, l.drive_folder_id FROM lectures l WHERE l.id = ? AND l.status = "active" LIMIT 1');
+        $lectureStmt->bind_param('i', $lectureId);
+    }
     $lectureStmt->execute();
     $lecture = $lectureStmt->get_result()->fetch_assoc();
 }
 
-if (!$lecture) {
-    $error = 'This session is not available for your group.';
-} else {
+if ($lecture) {
+    $conn->query("CREATE TABLE IF NOT EXISTS lecture_views (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        student_id INT NOT NULL,
+        lecture_id INT NOT NULL,
+        watched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        KEY student_id (student_id),
+        KEY lecture_id (lecture_id)
+    )");
+
+    $recentViewStmt = $conn->prepare('SELECT id FROM lecture_views WHERE student_id = ? AND lecture_id = ? AND watched_at >= DATE_SUB(NOW(), INTERVAL 10 MINUTE) LIMIT 1');
+    $recentViewStmt->bind_param('ii', $user['id'], $lectureId);
+    $recentViewStmt->execute();
+    $recentView = $recentViewStmt->get_result()->fetch_assoc();
+
+    if (!$recentView) {
+        $insertViewStmt = $conn->prepare('INSERT INTO lecture_views (student_id, lecture_id) VALUES (?, ?)');
+        $insertViewStmt->bind_param('ii', $user['id'], $lectureId);
+        $insertViewStmt->execute();
+    }
+
     $lectureSource = resolveLectureSource($lecture['drive_folder_id'] ?? '');
     $sourceType = $lectureSource['type'];
     $sourceUrl = $lectureSource['url'];
+} else {
+    $error = 'This session is not available for your group.';
 }
 ?>
 <!doctype html>
@@ -183,6 +212,35 @@ if (!$lecture) {
     </div>
 
     <script>
+        // Prevent iframe content from opening new windows via window.open
+        window.open = function() {
+            return null;
+        };
+
+        (function() {
+            var overlay = null;
+            var hideTimer = null;
+
+            function getOverlay() {
+                if (!overlay) overlay = document.getElementById('security-overlay');
+                return overlay;
+            }
+
+            window.addEventListener('keydown', function(e) {
+                if (e.key === 'PrintScreen' || e.key === 'F13') {
+                    var o = getOverlay();
+                    if (o) {
+                        o.style.display = 'flex';
+                    }
+                    if (hideTimer) clearTimeout(hideTimer);
+                    hideTimer = setTimeout(function() {
+                        var o2 = getOverlay();
+                        if (o2) o2.style.display = 'none';
+                    }, 1500);
+                }
+            }, true);
+        })();
+
         let overlayHideTimer = null;
         let activeSecurityContext = {
             doc: document,
@@ -217,190 +275,186 @@ if (!$lecture) {
 
             function ensureOverlay() {
                 let overlay = document.getElementById('security-overlay');
-
                 if (!overlay) {
                     overlay = document.createElement('div');
                     overlay.id = 'security-overlay';
                     overlay.setAttribute('aria-hidden', 'true');
-
                     const message = document.createElement('div');
                     message.className = 'security-overlay__message';
                     message.textContent = 'Recording not allowed';
                     overlay.appendChild(message);
-
-                    if (document.body) {
-                        document.body.appendChild(overlay);
-                    } else {
-                        document.documentElement.appendChild(overlay);
-                    }
-
-                    overlay.style.position = 'fixed';
-                    overlay.style.inset = '0';
-                    overlay.style.display = 'none';
-                    overlay.style.alignItems = 'center';
-                    overlay.style.justifyContent = 'center';
-                    overlay.style.background = 'rgba(0, 0, 0, 0.97)';
-                    overlay.style.color = '#fff';
-                    overlay.style.zIndex = '2147483647';
-                    overlay.style.pointerEvents = 'none';
-                    overlay.style.textAlign = 'center';
-                    overlay.style.padding = '1.5rem';
-                    message.style.fontSize = '1.5rem';
-                    message.style.fontWeight = '600';
-                    message.style.letterSpacing = '0.02em';
-                    message.style.textTransform = 'uppercase';
+                    (document.body || document.documentElement).appendChild(overlay);
+                    Object.assign(overlay.style, {
+                        position: 'fixed', inset: '0', display: 'none',
+                        alignItems: 'center', justifyContent: 'center',
+                        background: 'rgba(0,0,0,0.97)', color: '#fff',
+                        zIndex: '2147483647', pointerEvents: 'none',
+                        textAlign: 'center', padding: '1.5rem'
+                    });
+                    Object.assign(message.style, {
+                        fontSize: '1.5rem', fontWeight: '600',
+                        letterSpacing: '0.02em', textTransform: 'uppercase'
+                    });
                 }
-
                 return overlay;
             }
 
+            function showOverlay(autohideMs) {
+                const overlay = ensureOverlay();
+                overlay.style.display = 'flex';
+                if (overlayHideTimer) clearTimeout(overlayHideTimer);
+                if (autohideMs) {
+                    overlayHideTimer = setTimeout(hideOverlay, autohideMs);
+                }
+            }
+
+            function hideOverlay() {
+                const overlay = document.getElementById('security-overlay');
+                if (overlay) overlay.style.display = 'none';
+                if (overlayHideTimer) { clearTimeout(overlayHideTimer); overlayHideTimer = null; }
+            }
+
             function detachSignals() {
-                cleanupHandlers.forEach(function (entry) {
-                    entry.target.removeEventListener(entry.type, entry.handler, entry.options);
+                cleanupHandlers.forEach(function(e) {
+                    e.target.removeEventListener(e.type, e.handler, e.options);
                 });
                 cleanupHandlers = [];
             }
 
-            function attachSignals(doc, win) {
-                const overlay = ensureOverlay();
-                activeSecurityContext = { doc: doc, win: win, overlay: overlay };
-
-                // Signal 1: Page visibility
-                const visibilityHandler = function () {
-                    if (doc.visibilityState === 'hidden') {
-                        showOverlay();
-                    } else {
-                        hideOverlay();
-                    }
-                };
-                doc.addEventListener('visibilitychange', visibilityHandler, false);
-                cleanupHandlers.push({ target: doc, type: 'visibilitychange', handler: visibilityHandler, options: false });
-
-                // Signal 2: Window blur/focus
-                const blurHandler = function () {
-                    showOverlay();
-                };
-                win.addEventListener('blur', blurHandler, false);
-                cleanupHandlers.push({ target: win, type: 'blur', handler: blurHandler, options: false });
-
-                const focusHandler = function () {
-                    hideOverlay();
-                };
-                win.addEventListener('focus', focusHandler, false);
-                cleanupHandlers.push({ target: win, type: 'focus', handler: focusHandler, options: false });
-
-                // Signal 3: Keyboard shortcuts
-                const keydownHandler = function (event) {
-                    const key = event.key;
-                    const isPrintScreen = key === 'PrintScreen' || key === 'F13';
-                    const isScreenshotShortcut = (event.key === '3' && event.metaKey && event.shiftKey) ||
-                        (event.key === '4' && event.metaKey && event.shiftKey) ||
-                        (event.key === 's' && event.metaKey && event.shiftKey) ||
-                        (event.key === 'S' && event.metaKey && event.shiftKey) ||
-                        (event.key === 's' && event.ctrlKey && event.shiftKey) ||
-                        (event.key === 'S' && event.ctrlKey && event.shiftKey) ||
-                        (event.key === 'p' && event.ctrlKey) ||
-                        (event.key === 'P' && event.ctrlKey);
-
-                    if (isPrintScreen || isScreenshotShortcut) {
-                        event.preventDefault();
-                        showOverlay();
-
-                        if (overlayHideTimer) {
-                            clearTimeout(overlayHideTimer);
-                        }
-
-                        overlayHideTimer = setTimeout(function () {
-                            hideOverlay();
-                        }, 3000);
-                    }
-                };
-                doc.addEventListener('keydown', keydownHandler, true);
-                cleanupHandlers.push({ target: doc, type: 'keydown', handler: keydownHandler, options: true });
-
-                // Signal 4: Right-click blocking
-                const contextmenuHandler = function (event) {
-                    event.preventDefault();
-                    showOverlay();
-                };
-                doc.addEventListener('contextmenu', contextmenuHandler, true);
-                cleanupHandlers.push({ target: doc, type: 'contextmenu', handler: contextmenuHandler, options: true });
-
-                // Signal 4b: Embedded player interaction
-                const playerElements = Array.from(doc.querySelectorAll('video, iframe, .player-frame'));
-                playerElements.forEach(function (element) {
-                    ['touchstart', 'pointerdown', 'focus', 'keydown'].forEach(function (eventName) {
-                        const playerHandler = function () {
-                            showOverlay();
-                        };
-                        element.addEventListener(eventName, playerHandler, true);
-                        cleanupHandlers.push({ target: element, type: eventName, handler: playerHandler, options: true });
-                    });
-
-                    const clickHandler = function (event) {
-                        if (event.button === 0) {
-                            event.stopPropagation();
-                            showOverlay();
-                            if (overlayHideTimer) {
-                                clearTimeout(overlayHideTimer);
-                            }
-                            overlayHideTimer = setTimeout(function () {
-                                hideOverlay();
-                            }, 2000);
-                        }
-                    };
-                    element.addEventListener('click', clickHandler, true);
-                    cleanupHandlers.push({ target: element, type: 'click', handler: clickHandler, options: true });
-                });
+            function on(target, type, handler, options) {
+                target.addEventListener(type, handler, options);
+                cleanupHandlers.push({ target, type, handler, options });
             }
 
-            function syncSecurityContext() {
-                const fullscreenElement = document.fullscreenElement || document.webkitFullscreenElement || null;
-                let targetDoc = document;
-                let targetWin = window;
+            function attachSignals() {
+                // Signal 1: Tab hidden (reliable, covers recording apps switching focus)
+                on(document, 'visibilitychange', function() {
+                    if (document.visibilityState === 'hidden') showOverlay();
+                    else hideOverlay();
+                }, false);
 
-                if (fullscreenElement && fullscreenElement.contentDocument) {
-                    targetDoc = fullscreenElement.contentDocument;
-                    targetWin = fullscreenElement.contentWindow || window;
-                }
-
-                detachSignals();
-                attachSignals(targetDoc, targetWin);
-
-                if (fullscreenElement) {
+                // Signal 2: Window blur — show on any focus loss
+                on(window, 'blur', function() {
                     showOverlay();
-                } else {
+                }, false);
+                on(window, 'focus', function() {
                     hideOverlay();
-                }
+                }, false);
+
+                // Signal 3: Screenshot / print keyboard shortcuts
+                on(document, 'keydown', function(e) {
+                    const isPrintScreen = e.key === 'PrintScreen' || e.key === 'F13';
+                    const isMacScreenshot =
+                        e.metaKey && e.shiftKey && (e.key === '3' || e.key === '4' || e.key === 's' || e.key === 'S');
+                    const isWinScreenshot =
+                        e.ctrlKey && e.shiftKey && (e.key === 's' || e.key === 'S');
+                    const isPrint = e.ctrlKey && (e.key === 'p' || e.key === 'P');
+
+                    if (isPrintScreen) {
+                        showOverlay(1000);
+                        return;
+                    }
+
+                    if (isMacScreenshot || isWinScreenshot || isPrint) {
+                        e.preventDefault();
+                        showOverlay(3000);
+                    }
+                }, true);
+
+                // Signal 4: Right-click — block and auto-hide after 2s
+                on(document, 'contextmenu', function(e) {
+                    e.preventDefault();
+                    showOverlay(2000);
+                }, true);
+
+                // Signal 5: Block drag-to-download
+                on(document, 'dragstart', function(e) {
+                    e.preventDefault();
+                }, true);
             }
 
             function checkDevTools() {
-                const currentWidth = window.innerWidth;
-                const currentHeight = window.innerHeight;
-                const widthDifference = Math.abs(currentWidth - lastWindowWidth);
-                const heightDifference = Math.abs(currentHeight - lastWindowHeight);
-
-                if ((widthDifference > 160 || heightDifference > 160) && !devtoolsOpen) {
-                    devtoolsOpen = true;
-                    showOverlay();
-                } else if (widthDifference <= 160 && heightDifference <= 160 && devtoolsOpen) {
-                    devtoolsOpen = false;
-                    hideOverlay();
-                }
-
-                lastWindowWidth = currentWidth;
-                lastWindowHeight = currentHeight;
+                const w = window.innerWidth;
+                const h = window.innerHeight;
+                const triggered = Math.abs(w - lastWindowWidth) > 160 && Math.abs(h - lastWindowHeight) > 160;
+                if (triggered && !devtoolsOpen) { devtoolsOpen = true; showOverlay(); }
+                else if (!triggered && devtoolsOpen) { devtoolsOpen = false; hideOverlay(); }
+                lastWindowWidth = w;
+                lastWindowHeight = h;
             }
 
-            // Signal 5: DevTools size difference
             setInterval(checkDevTools, 1000);
 
-            document.addEventListener('fullscreenchange', syncSecurityContext, false);
-            document.addEventListener('webkitfullscreenchange', syncSecurityContext, false);
-            syncSecurityContext();
+            document.addEventListener('fullscreenchange', function() {
+                detachSignals();
+                attachSignals();
+            }, false);
+            document.addEventListener('webkitfullscreenchange', function() {
+                detachSignals();
+                attachSignals();
+            }, false);
+
+            attachSignals();
         }
 
-        document.addEventListener('DOMContentLoaded', initSecurityModule);
+        document.addEventListener('DOMContentLoaded', function () {
+            initSecurityModule();
+            initWidevine();
+        });
+
+        function initWidevine() {
+            const video = document.getElementById('lecture-video');
+            if (!video || !window.navigator.requestMediaKeySystemAccess) {
+                return;
+            }
+
+            const keySystem = 'com.widevine.alpha';
+            const config = [{
+                initDataTypes: ['cenc'],
+                videoCapabilities: [{ contentType: 'video/mp4; codecs="avc1.42E01E"' }],
+            }];
+
+            navigator.requestMediaKeySystemAccess(keySystem, config)
+                .then(function (mediaKeySystemAccess) {
+                    return mediaKeySystemAccess.createMediaKeys();
+                })
+                .then(function (mediaKeys) {
+                    return video.setMediaKeys(mediaKeys);
+                })
+                .then(function () {
+                    video.addEventListener('encrypted', function (event) {
+                        const initData = event.initData;
+                        if (!initData) {
+                            return;
+                        }
+
+                        const session = video.mediaKeys.createSession();
+                        session.addEventListener('message', function (messageEvent) {
+                            fetch('widevine_license.php', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/octet-stream' },
+                                body: messageEvent.message,
+                            })
+                                .then(function (response) {
+                                    return response.arrayBuffer();
+                                })
+                                .then(function (license) {
+                                    return session.update(license);
+                                })
+                                .catch(function () {
+                                    console.error('Widevine license request failed.');
+                                });
+                        });
+
+                        session.generateRequest(event.initDataType, initData).catch(function (error) {
+                            console.error('Widevine generateRequest failed:', error);
+                        });
+                    });
+                })
+                .catch(function (error) {
+                    console.error('Widevine initialization failed:', error);
+                });
+        }
     </script>
 
     <div class="container py-4">
@@ -417,65 +471,14 @@ if (!$lecture) {
                     <?php endif; ?>
 
                     <?php if (($sourceType === 'video' || $sourceType === 'drive_file') && $sourceUrl !== '' && isVideoSourceUrl($sourceUrl)): ?>
-                        <div class="video-shell">
-                            <video id="session-video" class="player-frame" preload="metadata" playsinline disablePictureInPicture controlsList="nodownload nofullscreen noplaybackrate">
-                                <source src="<?php echo htmlspecialchars(buildVideoProxyUrl($sourceUrl), ENT_QUOTES, 'UTF-8'); ?>">
-                                Your browser does not support the video player.
-                            </video>
-                            <div class="video-controls" role="group" aria-label="Video controls">
-                                <button type="button" class="video-controls__button" id="video-toggle">Play</button>
-                                <span id="video-time">0:00 / 0:00</span>
-                            </div>
-                        </div>
-                        <script>
-                            document.addEventListener('DOMContentLoaded', function () {
-                                const video = document.getElementById('session-video');
-                                const toggle = document.getElementById('video-toggle');
-                                const timeLabel = document.getElementById('video-time');
-
-                                if (!video || !toggle || !timeLabel) {
-                                    return;
-                                }
-
-                                video.removeAttribute('controls');
-                                video.controls = false;
-                                video.setAttribute('controlsList', 'nodownload nofullscreen noplaybackrate');
-
-                                const updateStatus = function () {
-                                    const current = Number.isFinite(video.currentTime) ? video.currentTime : 0;
-                                    const duration = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : 0;
-                                    const formatTime = function (value) {
-                                        const safeValue = Math.max(0, Math.floor(value));
-                                        const minutes = Math.floor(safeValue / 60);
-                                        const seconds = safeValue % 60;
-                                        return minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
-                                    };
-                                    timeLabel.textContent = formatTime(current) + ' / ' + formatTime(duration);
-                                    toggle.textContent = video.paused ? 'Play' : 'Pause';
-                                };
-
-                                toggle.addEventListener('click', function () {
-                                    if (video.paused) {
-                                        video.play().catch(function () {});
-                                    } else {
-                                        video.pause();
-                                    }
-                                });
-
-                                video.addEventListener('play', updateStatus);
-                                video.addEventListener('pause', updateStatus);
-                                video.addEventListener('timeupdate', updateStatus);
-                                video.addEventListener('loadedmetadata', updateStatus);
-                                updateStatus();
-                            });
-                        </script>
+                        <video id="lecture-video" class="player-frame" controls preload="metadata" playsinline crossorigin="anonymous">
+                            <source src="<?php echo htmlspecialchars(buildVideoProxyUrl($sourceUrl), ENT_QUOTES, 'UTF-8'); ?>">
+                            Your browser does not support the video player.
+                        </video>
                     <?php elseif ($sourceType === 'youtube' && $sourceUrl !== ''): ?>
-                        <iframe class="player-frame" src="<?php echo htmlspecialchars($sourceUrl, ENT_QUOTES, 'UTF-8'); ?>" allow="autoplay; fullscreen" allowfullscreen></iframe>
+                        <iframe class="player-frame" src="<?php echo htmlspecialchars($sourceUrl, ENT_QUOTES, 'UTF-8'); ?>" sandbox="allow-scripts allow-same-origin" allow="autoplay; fullscreen" allowfullscreen></iframe>
                     <?php elseif ($sourceType === 'drive_file' && $sourceUrl !== ''): ?>
-                        <div style="position: relative; display: inline-block; width: 100%;">
-                            <iframe class="player-frame" src="<?php echo htmlspecialchars($sourceUrl, ENT_QUOTES, 'UTF-8'); ?>" allow="autoplay; fullscreen" allowfullscreen frameborder="0"></iframe>
-                            <div style="position: absolute; top: 0; right: 0; width: 90px; height: 56px; z-index: 10;"></div>
-                        </div>
+                        <iframe class="player-frame" src="<?php echo htmlspecialchars($sourceUrl, ENT_QUOTES, 'UTF-8'); ?>" sandbox="allow-scripts allow-same-origin" allow="autoplay; fullscreen" allowfullscreen frameborder="0"></iframe>
                         <!-- <a href="<?php echo htmlspecialchars($sourceUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" class="btn btn-outline-primary mt-3">Open source in Drive</a> -->
                     <?php elseif ($sourceType === 'folder' && $sourceUrl !== ''): ?>
                         <div class="alert alert-warning">
