@@ -30,6 +30,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Sign in to access Eyad Mazhar’s online math lessons, study resources, and quiz content for American-system exam preparation.">
+    <meta name="robots" content="noindex,follow">
+    <meta property="og:title" content="Login to Eyad Mazhar’s Online Math Portal">
+    <meta property="og:description" content="Access your student portal for lessons, resources, and quizzes from Eyad Mazhar.">
+    <meta property="og:type" content="website">
+    <meta property="twitter:card" content="summary">
+    <meta property="twitter:title" content="Login to Eyad Mazhar’s Online Math Portal">
+    <meta property="twitter:description" content="Access your student portal for lessons, resources, and quizzes from Eyad Mazhar.">
     <title>Login - Eyad LMS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="../assets/css/theme.css" rel="stylesheet">
@@ -42,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="card shadow-sm section-card">
                     <div class="card-body p-4">
                         <h2 class="page-title mb-3">Eyad LMS</h2>
-                        <p class="text-muted">Sign in to continue</p>
+                        <p class="text-light mb-3">Sign in to continue</p>
 
                         <?php if ($error !== ''): ?>
                             <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -53,11 +61,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         <form method="post">
                             <div class="mb-3">
-                                <label class="form-label">Username</label>
+                                <label class="form-label fw-semibold" style="color: #f8fafc;">Username</label>
                                 <input type="text" name="username" class="form-control" required>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Password</label>
+                                <label class="form-label fw-semibold" style="color: #f8fafc;">Password</label>
                                 <input type="password" name="password" class="form-control" required>
                             </div>
                             <button type="submit" class="btn btn-primary w-100">Login</button>

@@ -191,10 +191,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $choices4 = $_POST['choice_4'] ?? [];
         $correctAnswers = $_POST['correct_answer'] ?? [];
         $existingImages = $_POST['existing_image'] ?? [];
+        $removeQuestions = array_map('intval', (array)($_POST['remove_question'] ?? []));
+        $removeImages = array_map('intval', (array)($_POST['remove_image'] ?? []));
+        $oldQuestionImagePaths = [];
+
+        if ($action === 'edit' && $quizId > 0) {
+            $existingQuestionsStmt = $conn->prepare('SELECT image_path FROM questions WHERE quiz_id = ?');
+            $existingQuestionsStmt->bind_param('i', $quizId);
+            $existingQuestionsStmt->execute();
+            $existingQuestionsResult = $existingQuestionsStmt->get_result();
+            while ($existingQuestion = $existingQuestionsResult->fetch_assoc()) {
+                $oldImagePath = trim($existingQuestion['image_path'] ?? '');
+                if ($oldImagePath !== '') {
+                    $oldQuestionImagePaths[] = $oldImagePath;
+                }
+            }
+        }
 
         $questionStmt = $conn->prepare('INSERT INTO questions (quiz_id, question, image_path, choice_1, choice_2, choice_3, choice_4, correct_answer) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+        $retainedImagePaths = [];
 
         foreach ($questions as $index => $question) {
+            $removeQuestion = (int)($removeQuestions[$index] ?? 0);
+            if ($removeQuestion === 1) {
+                continue;
+            }
+
             $questionText = trim($question ?? '');
             if ($questionText === '') {
                 continue;
@@ -206,6 +228,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $choice4 = trim($choices4[$index] ?? '');
             $correctAnswer = trim($correctAnswers[$index] ?? '1');
             $imagePath = trim($existingImages[$index] ?? '');
+            $shouldRemoveImage = (int)($removeImages[$index] ?? 0) === 1;
+
+            if ($shouldRemoveImage) {
+                if ($imagePath !== '') {
+                    $oldImageFilePath = __DIR__ . '/../' . $imagePath;
+                    if (is_file($oldImageFilePath)) {
+                        unlink($oldImageFilePath);
+                    }
+                }
+                $imagePath = '';
+            }
 
             if (isset($_FILES['question_image']) && is_array($_FILES['question_image']) && isset($_FILES['question_image']['tmp_name'][$index])) {
                 $imageFile = $_FILES['question_image'];
@@ -254,6 +287,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $questionStmt->bind_param('isssssss', $quizId, $questionText, $imagePath, $choice1, $choice2, $choice3, $choice4, $correctAnswer);
             $questionStmt->execute();
+
+            if ($imagePath !== '') {
+                $retainedImagePaths[] = $imagePath;
+            }
+        }
+
+        foreach ($oldQuestionImagePaths as $oldImagePath) {
+            if ($oldImagePath === '' || in_array($oldImagePath, $retainedImagePaths, true)) {
+                continue;
+            }
+
+            $oldImageFilePath = __DIR__ . '/../' . $oldImagePath;
+            if (is_file($oldImageFilePath)) {
+                unlink($oldImageFilePath);
+            }
         }
     }
 }
@@ -501,8 +549,16 @@ if ($editingQuizId > 0) {
                                 <?php foreach ($questionBlocks as $index => $question): ?>
                                     <div class="question-block border rounded p-3 mb-3">
                                         <input type="hidden" name="existing_image[]" value="<?php echo htmlspecialchars($question['image_path'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                                        <input type="hidden" name="remove_question[]" value="0">
+                                        <input type="hidden" name="remove_image[]" value="0">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <label class="form-label mb-0">Question</label>
+                                            <div class="btn-group btn-group-sm">
+                                                <button type="button" class="btn btn-outline-danger remove-question-btn">Remove Question</button>
+                                                <button type="button" class="btn btn-outline-secondary remove-image-btn">Remove Picture</button>
+                                            </div>
+                                        </div>
                                         <div class="mb-2">
-                                            <label class="form-label">Question</label>
                                             <input type="text" name="questions[]" class="form-control" value="<?php echo htmlspecialchars($question['question'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" required>
                                         </div>
                                         <div class="mb-2">
@@ -510,8 +566,9 @@ if ($editingQuizId > 0) {
                                             <input type="file" name="question_image[]" class="form-control" accept="image/*">
                                             <div class="form-text">Supported formats: JPG, PNG, GIF. Maximum file size: 2MB.</div>
                                             <?php if (!empty($question['image_path'])): ?>
-                                                <div class="form-text">Current image: <a href="../<?php echo htmlspecialchars($question['image_path'], ENT_QUOTES, 'UTF-8'); ?>" target="_blank">View</a></div>
+                                                <div class="form-text current-image-info">Current image: <a href="../<?php echo htmlspecialchars($question['image_path'], ENT_QUOTES, 'UTF-8'); ?>" target="_blank">View</a></div>
                                             <?php endif; ?>
+                                            <div class="form-text text-danger image-remove-status d-none">Picture will be removed.</div>
                                         </div>
                                         <div class="row g-2">
                                             <div class="col-md-6"><input type="text" name="choice_1[]" class="form-control" placeholder="Choice 1" value="<?php echo htmlspecialchars($question['choice_1'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" required></div>
@@ -604,19 +661,65 @@ if ($editingQuizId > 0) {
     </div>
 
     <script>
+        function bindQuestionBlockEvents(block) {
+            const removeQuestionButton = block.querySelector('.remove-question-btn');
+            const removeImageButton = block.querySelector('.remove-image-btn');
+            const removeQuestionInput = block.querySelector('input[name="remove_question[]"]');
+            const removeImageInput = block.querySelector('input[name="remove_image[]"]');
+            const existingImageInput = block.querySelector('input[name="existing_image[]"]');
+            const imageStatus = block.querySelector('.image-remove-status');
+            const currentImageInfo = block.querySelector('.current-image-info');
+            const fileInput = block.querySelector('input[name="question_image[]"]');
+
+            if (removeQuestionButton && removeQuestionInput) {
+                removeQuestionButton.addEventListener('click', function () {
+                    removeQuestionInput.value = '1';
+                    block.style.display = 'none';
+                });
+            }
+
+            if (removeImageButton && removeImageInput) {
+                removeImageButton.addEventListener('click', function () {
+                    removeImageInput.value = '1';
+                    if (existingImageInput) {
+                        existingImageInput.value = '';
+                    }
+                    if (fileInput) {
+                        fileInput.value = '';
+                    }
+                    if (imageStatus) {
+                        imageStatus.classList.remove('d-none');
+                    }
+                    if (currentImageInfo) {
+                        currentImageInfo.classList.add('d-none');
+                    }
+                });
+            }
+        }
+
         function addQuestionBlock() {
             const container = document.getElementById('questionsContainer');
             const block = document.createElement('div');
             block.className = 'question-block border rounded p-3 mb-3';
             block.innerHTML = `
                 <input type="hidden" name="existing_image[]" value="">
+                <input type="hidden" name="remove_question[]" value="0">
+                <input type="hidden" name="remove_image[]" value="0">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="form-label mb-0">Question</label>
+                    <div class="btn-group btn-group-sm">
+                        <button type="button" class="btn btn-outline-danger remove-question-btn">Remove Question</button>
+                        <button type="button" class="btn btn-outline-secondary remove-image-btn">Remove Picture</button>
+                    </div>
+                </div>
                 <div class="mb-2">
-                    <label class="form-label">Question</label>
                     <input type="text" name="questions[]" class="form-control" required>
                 </div>
                 <div class="mb-2">
                     <label class="form-label">Question Image (optional)</label>
                     <input type="file" name="question_image[]" class="form-control" accept="image/*">
+                    <div class="form-text">Supported formats: JPG, PNG, GIF. Maximum file size: 2MB.</div>
+                    <div class="form-text text-danger image-remove-status d-none">Picture will be removed.</div>
                 </div>
                 <div class="row g-2">
                     <div class="col-md-6"><input type="text" name="choice_1[]" class="form-control" placeholder="Choice 1" required></div>
@@ -634,7 +737,12 @@ if ($editingQuizId > 0) {
                     </select>
                 </div>`;
             container.appendChild(block);
+            bindQuestionBlockEvents(block);
         }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.question-block').forEach(bindQuestionBlockEvents);
+        });
     </script>
     <?php include __DIR__ . '/../includes/public_footer.php'; ?>
 </body>

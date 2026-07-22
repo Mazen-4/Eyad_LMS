@@ -18,7 +18,7 @@ $user = requireLogin(['admin']);
     <div class="container py-4">
         <div class="hero-panel mb-4">
             <h1 class="page-title mb-2">Admin Dashboard</h1>
-            <p class="text-muted mb-0">Manage students, sessions, resources, and quizzes from one clean workspace.</p>
+            <p class="text-muted mb-0">Manage students, admins, groups, sessions, resources, and quizzes from one clean workspace.</p>
         </div>
         <div class="row g-3">
             <div class="col-md-4">
@@ -44,12 +44,34 @@ $user = requireLogin(['admin']);
                 </a>
             </div>
             <div class="col-md-4">
+                <a href="groups.php" class="text-decoration-none text-dark">
+                    <div class="card h-100 shadow-sm hover-shadow">
+                        <div class="card-body">
+                            <h5 class="card-title">Groups</h5>
+                            <p class="card-text">Create learning groups and control access to content.</p>
+                            <span class="btn btn-outline-primary btn-sm mt-2">Open Groups</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-4">
                 <a href="lectures.php" class="text-decoration-none text-dark">
                     <div class="card h-100 shadow-sm hover-shadow">
                         <div class="card-body">
                             <h5 class="card-title">Sessions</h5>
                             <p class="card-text">Create and organize session folders and access.</p>
                             <span class="btn btn-outline-primary btn-sm mt-2">Open Sessions</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-4">
+                <a href="resources.php" class="text-decoration-none text-dark">
+                    <div class="card h-100 shadow-sm hover-shadow">
+                        <div class="card-body">
+                            <h5 class="card-title">Resources</h5>
+                            <p class="card-text">Upload PDFs and make them available to selected groups.</p>
+                            <span class="btn btn-outline-primary btn-sm mt-2">Open Resources</span>
                         </div>
                     </div>
                 </a>

@@ -16,9 +16,9 @@ $dashboardLabel = 'Login';
 if (isLoggedIn()) {
     $user = currentUser();
     if (!empty($user['role']) && $user['role'] === 'admin') {
-        $dashboardLink = $baseUrl . 'admin/dashboard.php';
+        $dashboardLink = '../admin/dashboard.php';
     } else {
-        $dashboardLink = $baseUrl . 'student/dashboard.php';
+        $dashboardLink = '../student/dashboard.php';
     }
     $dashboardLabel = 'Dashboard';
 }

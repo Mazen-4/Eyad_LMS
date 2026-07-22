@@ -3,53 +3,21 @@ require_once __DIR__ . '/../includes/auth.php';
 
 $successMessage = '';
 $errorMessage = '';
-$web3formsAccessKey = 'YOUR_WEB3FORMS_ACCESS_KEY';
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = trim($_POST['name'] ?? '');
-    $email = trim($_POST['email'] ?? '');
-    $phone = trim($_POST['phone'] ?? '');
-    $subject = trim($_POST['subject'] ?? '');
-    $message = trim($_POST['message'] ?? '');
-
-    if ($name === '' || $email === '' || $message === '') {
-        $errorMessage = 'Please fill in your name, email, and message.';
-    } else {
-        $postData = [
-            'access_key' => $web3formsAccessKey,
-            'name' => $name,
-            'email' => $email,
-            'phone' => $phone,
-            'subject' => $subject !== '' ? $subject : 'New contact form submission',
-            'message' => $message,
-            'from_name' => 'Eyad LMS Website',
-            'botcheck' => ''
-        ];
-
-        $ch = curl_init('https://api.web3forms.com/submit');
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postData));
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 20);
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-
-        $decoded = json_decode($response, true);
-
-        if ($httpCode === 200 && !empty($decoded['success'])) {
-            $successMessage = 'Your message was sent successfully. Thank you for contacting us.';
-        } else {
-            $errorMessage = 'The message could not be sent right now. Please try again later or contact the instructor directly.';
-        }
-    }
-}
+$web3formsAccessKey = '1a222743-ff83-4204-8c4d-5fa84eda88ad';
 ?>
 <!doctype html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Contact Eyad Mazhar for questions, support, or general inquiries about online math preparation and exam-focused teaching resources.">
+    <meta name="robots" content="index,follow">
+    <meta property="og:title" content="Contact Eyad Mazhar">
+    <meta property="og:description" content="Get in touch with Eyad Mazhar for support, questions, or general inquiries about online math preparation.">
+    <meta property="og:type" content="website">
+    <meta property="twitter:card" content="summary">
+    <meta property="twitter:title" content="Contact Eyad Mazhar">
+    <meta property="twitter:description" content="Get in touch with Eyad Mazhar for support, questions, or general inquiries about online math preparation.">
     <title>Contact - Eyad LMS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="../assets/css/theme.css" rel="stylesheet">
@@ -84,7 +52,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
                         <?php endif; ?>
 
-                        <form method="post">
+                        <form id="contactForm" action="https://api.web3forms.com/submit" method="POST">
+                            <input type="hidden" id="web3formsAccessKey" value="<?php echo htmlspecialchars($web3formsAccessKey, ENT_QUOTES, 'UTF-8'); ?>">
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label">Name</label>
@@ -107,10 +76,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <textarea name="message" class="form-control" rows="5" required></textarea>
                                 </div>
                                 <div class="col-12">
-                                    <button type="submit" class="btn btn-primary">Send Message</button>
+                                    <button type="submit" class="btn btn-primary" id="contactSubmitBtn">Send Message</button>
                                 </div>
                             </div>
                         </form>
+
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function () {
+                                const form = document.getElementById('contactForm');
+                                const submitBtn = document.getElementById('contactSubmitBtn');
+
+                                if (!form || !submitBtn) {
+                                    return;
+                                }
+
+                                form.addEventListener('submit', async function (event) {
+                                    event.preventDefault();
+
+                                    const accessKeyInput = document.getElementById('web3formsAccessKey');
+                                    const accessKey = accessKeyInput ? String(accessKeyInput.value).trim() : '';
+                                    const formData = new FormData(form);
+                                    if (accessKey !== '') {
+                                        formData.set('access_key', accessKey);
+                                    }
+
+                                    const originalText = submitBtn.textContent;
+                                    submitBtn.textContent = 'Sending...';
+                                    submitBtn.disabled = true;
+
+                                    try {
+                                        const response = await fetch('https://api.web3forms.com/submit', {
+                                            method: 'POST',
+                                            body: formData
+                                        });
+
+                                        const data = await response.json();
+
+                                        if (response.ok) {
+                                            alert('Success! Your message has been sent.');
+                                            form.reset();
+                                        } else {
+                                            alert('Error: ' + (data.message || data.error || 'Unable to send your message.'));
+                                        }
+                                    } catch (error) {
+                                        alert('Something went wrong. Please try again. ' + (error?.message || ''));
+                                    } finally {
+                                        submitBtn.textContent = originalText;
+                                        submitBtn.disabled = false;
+                                    }
+                                });
+                            });
+                        </script>
                     </div>
                 </div>
             </div>

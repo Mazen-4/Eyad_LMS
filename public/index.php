@@ -14,6 +14,15 @@ $baseUrl = rtrim($publicDir, '/') . '/';
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Eyad Mazhar provides structured online math preparation for American-system students, with lectures, resources, and quizzes for EST, DSAT, and ACT success.">
+    <meta name="robots" content="index,follow">
+    <meta name="keywords" content="Eyad Mazhar, Eng. Eyad Mazhar, math tutor, EST prep, DSAT prep, ACT prep, American-system math, online math lessons">
+    <meta property="og:title" content="Eyad Mazhar - Online Math Preparation for EST, DSAT, and ACT">
+    <meta property="og:description" content="Explore structured math lessons, exam resources, and quiz-based practice from Eyad Mazhar for American-system students.">
+    <meta property="og:type" content="website">
+    <meta property="twitter:card" content="summary">
+    <meta property="twitter:title" content="Eyad Mazhar - Online Math Preparation for EST, DSAT, and ACT">
+    <meta property="twitter:description" content="Explore structured math lessons, exam resources, and quiz-based practice from Eyad Mazhar for American-system students.">
     <title>Eyad LMS - Home</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="../assets/css/theme.css" rel="stylesheet">

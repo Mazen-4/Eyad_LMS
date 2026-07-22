@@ -8,6 +8,7 @@
   --muted: #64748b;
   --border: #e2e8f0;
   --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  --content-text: #111827;
 }
 
 body {
@@ -139,7 +140,22 @@ footer.site-footer {
 }
 
 .text-muted {
-  color: #cbd5e1 !important;
+  color: #4b5563 !important;
+}
+
+.table,
+.table th,
+.table td,
+.table thead th,
+.table tbody td,
+.table tbody tr,
+.list-group-item,
+.card-body,
+.card-title,
+.card-text,
+.card-header,
+.card-footer {
+  color: var(--content-text) !important;
 }
 
 .table-responsive {
