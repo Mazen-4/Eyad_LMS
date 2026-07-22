@@ -30,8 +30,8 @@ The current codebase includes the following completed features:
 ### Public Website
 - Home page with a modern landing experience
 - About page
-- Contact page
-- Login page
+- Contact page with a completed contact form using Web3Forms API and async form submission
+- Login page with improved visibility for username/password labels and hidden helper text
 - Shared navigation and footer components
 - Branding and logo integration
 
@@ -41,23 +41,32 @@ The current codebase includes the following completed features:
 - role-based redirection for admin and student users
 - protected pages for admin and student sections
 - student group information loaded from the database during the session
+- metadata tags added to public pages for better SEO and social preview (Open Graph + Twitter cards)
 
 ### Admin Panel
-- admin dashboard with quick access cards
+- admin dashboard with quick access cards for Students, Admins, Groups, Sessions, Resources, and Quizzes
 - student management with create, update, delete, and multi-group assignment
 - group management for organizing students into learning cohorts
 - session/lecture management with title, description, display order, status, and group visibility
 - resource management with PDF upload, description, status, and group visibility
-- quiz management with MCQ questions, image support, group access, time limits, attempt limits, and extra-attempt overrides
+- quiz management with MCQ questions, image support, group access, time limits, attempt limits, extra-attempt overrides, and question removal during quiz editing
 - minimal admin account creation for additional administrators
 
 ### Student Portal
 - student dashboard
 - session listing filtered by all groups assigned to the student
 - lecture/player experience with support for direct video files, YouTube links, Google Drive links, and Drive folders
+- experimental lecture player security overlay to discourage recording and screenshot capture, based on visibility, blur, keyboard shortcuts, and player interaction events (prototype only)
 - resource listing for PDFs assigned to the student’s groups
 - quiz experience with start/continue functionality, timer support, attempt history, score percentages, and dismissible feedback
 - password change flow for students
+
+### Latest Site State Notes
+- Contact form now sends messages through Web3Forms with browser-side async handling and button feedback.
+- Public pages include SEO and social metadata tags for Open Graph and Twitter.
+- Login page text and helper labels were fixed so low-contrast hidden text is visible.
+- Quiz editing now supports removing individual questions and optionally removing associated images.
+- The lecture player includes a black overlay prototype to discourage screen recording, but it is not a production-secure recording protection solution.
 
 ## 4. Technology Stack
 
@@ -366,6 +375,7 @@ This version intentionally stays simple. It does not currently include:
 - live video streaming
 - complex grading rules
 - fully expanded permissions beyond admin/student roles
+- fully completed recording/screenshot protection for the lecture player (the current black overlay is a prototype and not a production-proof solution)
 
 ## 18. Deployment Checklist
 
