@@ -108,6 +108,13 @@ function appAssetUrl(string $relativePath): string {
     return $basePath . '/' . $relativePath;
 }
 
+function appVersionedAssetUrl(string $relativePath): string {
+    $assetPath = __DIR__ . '/../' . ltrim($relativePath, '/');
+    $version = file_exists($assetPath) ? (string) filemtime($assetPath) : 'dev';
+
+    return appAssetUrl($relativePath) . '?v=' . $version;
+}
+
 function requireLogin($allowedRoles = []) {
     if (!isLoggedIn()) {
         header('Location: ../public/login.php');
