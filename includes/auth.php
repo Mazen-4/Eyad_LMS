@@ -77,6 +77,37 @@ function currentUser() {
     return $_SESSION['user'] ?? null;
 }
 
+function appBasePath(): string {
+    $scriptPath = $_SERVER['SCRIPT_NAME'] ?? '';
+    $scriptPath = rtrim($scriptPath, '/');
+
+    if ($scriptPath === '') {
+        return '/';
+    }
+
+    $currentDir = dirname($scriptPath);
+    $parentDir = dirname($currentDir);
+    $parentDir = rtrim($parentDir, '/');
+
+    if (basename($currentDir) === 'public' || basename($currentDir) === 'admin' || basename($currentDir) === 'student') {
+        return $parentDir === '' || $parentDir === '.' ? '/' : $parentDir;
+    }
+
+    return $currentDir === '' || $currentDir === '.' ? '/' : $currentDir;
+}
+
+function appAssetUrl(string $relativePath): string {
+    $basePath = appBasePath();
+    $basePath = rtrim($basePath, '/');
+    $relativePath = ltrim($relativePath, '/');
+
+    if ($basePath === '' || $basePath === '/') {
+        return '/' . $relativePath;
+    }
+
+    return $basePath . '/' . $relativePath;
+}
+
 function requireLogin($allowedRoles = []) {
     if (!isLoggedIn()) {
         header('Location: ../public/login.php');
