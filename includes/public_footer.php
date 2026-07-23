@@ -23,13 +23,13 @@ if (isLoggedIn()) {
         <div class="row g-4 align-items-start">
             <div class="col-lg-4">
                 <h5 class="fw-bold mb-2">Eng. Eyad Mazhar</h5>
-                <p class="mb-0 text-muted">A modern, secure learning platform for Eng. Eyad Mazhar and his students.</p>
+                <p class="mb-0 text-light">A modern, secure learning platform for Eng. Eyad Mazhar and his students.</p>
             </div>
             <div class="col-sm-6 col-lg-4">
                 <h6 class="mb-3">Quick Links</h6>
                 <ul class="list-unstyled mb-0">
                     <li class="mb-2"><a href="<?php echo htmlspecialchars($publicRoot, ENT_QUOTES, 'UTF-8'); ?>/index.php">Home</a></li>
-                    <li class="mb-2"><a href="<?php echo htmlspecialchars($publicRoot, ENT_QUOTES, 'UTF-8'); ?>/about.php">About</a></li>
+
                     <li class="mb-2"><a href="<?php echo htmlspecialchars($publicRoot, ENT_QUOTES, 'UTF-8'); ?>/contact.php">Contact</a></li>
                     <li><a href="<?php echo htmlspecialchars($footerLink, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($footerLabel, ENT_QUOTES, 'UTF-8'); ?></a></li>
                 </ul>
@@ -43,7 +43,7 @@ if (isLoggedIn()) {
                 </ul>
             </div>
         </div>
-        <div class="border-top mt-4 pt-3 small text-muted">
+        <div class="border-top mt-4 pt-3 small text-light">
             © <?php echo date('Y'); ?> Eng. Eyad Mazhar. All rights reserved.
         </div>
     </div>

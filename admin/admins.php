@@ -42,7 +42,7 @@ $adminsResult = $conn->query('SELECT id, name, username, status, created_at FROM
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Admins - Admin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="../assets/css/theme.css" rel="stylesheet">
+    <link href="../assets/css/theme.css?v=2" rel="stylesheet">
 </head>
 <body>
     <?php include __DIR__ . '/../includes/admin_nav.php'; ?>

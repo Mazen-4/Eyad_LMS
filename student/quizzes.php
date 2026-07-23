@@ -253,6 +253,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($availableAttemptLimit > 0 && $attemptsSoFar >= $availableAttemptLimit) {
                 $error = 'You have reached the maximum number of attempts for this quiz.';
             } else {
+                $activeAttemptStmt = $conn->prepare(
+                    'SELECT id, started_at FROM quiz_attempts 
+                     WHERE student_id = ? AND quiz_id = ? AND status = "in_progress" 
+                     ORDER BY id DESC LIMIT 1'
+                );
+                $activeAttemptStmt->bind_param('ii', $user['id'], $quizId);
+                $activeAttemptStmt->execute();
+                $activeAttempt = $activeAttemptStmt->get_result()->fetch_assoc();
+                $startedAt = $activeAttempt['started_at'] ?? $startedAt;
+
                 $timeLimitMinutes = (int)($quiz['time_limit_minutes'] ?? 0);
                 if ($timeLimitMinutes > 0 && $startedAt !== '') {
                     $startedAtTimestamp = strtotime($startedAt);
@@ -263,7 +273,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 if ($error === '') {
-                    $timeLimitMinutes = (int)($quiz['time_limit_minutes'] ?? 0);
                     if ($timeLimitMinutes > 0 && $startedAt === '') {
                         $error = 'Please start the quiz before submitting your answers.';
                     }
@@ -359,7 +368,7 @@ $activeQuizAttempt = $activeAttemptStmt->get_result()->fetch_assoc();
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Quizzes - Student</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="../assets/css/theme.css" rel="stylesheet">
+    <link href="../assets/css/theme.css?v=2" rel="stylesheet">
 </head>
 <body>
     <?php include __DIR__ . '/../includes/student_nav.php'; ?>
@@ -579,7 +588,7 @@ $activeQuizAttempt = $activeAttemptStmt->get_result()->fetch_assoc();
 
                     const quizId = startButton.getAttribute('data-quiz-id') || '';
                     const storageKey = 'quiz_timer_' + quizId;
-                    const storedState = window.sessionStorage.getItem(storageKey);
+                    const storedState = window.localStorage.getItem(storageKey);
                     let startDate = new Date();
 
                     function parseStartedAtToDate(value) {
@@ -594,17 +603,14 @@ $activeQuizAttempt = $activeAttemptStmt->get_result()->fetch_assoc();
                         }
 
                         const withT = normalizedStartedAt.replace(' ', 'T');
-                        const parsedStartedAt = new Date(withT.includes('T') ? withT : withT + 'T00:00:00');
+                        const utcString = withT.endsWith('Z') ? withT : withT + 'Z';
+                        const parsedStartedAt = new Date(utcString);
                         return Number.isNaN(parsedStartedAt.getTime()) ? null : parsedStartedAt;
                     }
 
                     const explicitStartDate = parseStartedAtToDate(startedAtValue);
-                    const now = Date.now();
-                    if (explicitStartDate) {
-                        const diffMs = now - explicitStartDate.getTime();
-                        if (Math.abs(diffMs) < 5 * 60 * 1000) {
-                            startDate = explicitStartDate;
-                        }
+                    if (explicitStartDate && !Number.isNaN(explicitStartDate.getTime())) {
+                        startDate = explicitStartDate;
                     } else if (storedState) {
                         try {
                             const parsedState = JSON.parse(storedState);
@@ -627,7 +633,7 @@ $activeQuizAttempt = $activeAttemptStmt->get_result()->fetch_assoc();
                     }
 
                     const persistStart = function (startTime) {
-                        window.sessionStorage.setItem(storageKey, JSON.stringify({
+                        window.localStorage.setItem(storageKey, JSON.stringify({
                             startedAt: startTime,
                             limitMinutes: timeLimitMinutes
                         }));
@@ -635,30 +641,54 @@ $activeQuizAttempt = $activeAttemptStmt->get_result()->fetch_assoc();
 
                     persistStart(startDate.getTime());
 
+                    const submitQuizOnExpiry = function () {
+                        if (form._expirySubmitted) {
+                            return;
+                        }
+
+                        form._expirySubmitted = true;
+                        timerLabel.textContent = 'Time is up — submitting your answers...';
+                        startButton.disabled = true;
+                        window.localStorage.removeItem(storageKey);
+                        form.submit();
+                    };
+
+                    const syncFromServer = function () {
+                        if (!quizId || timeLimitMinutes <= 0) {
+                            return;
+                        }
+
+                        fetch('quiz_time_check.php?quiz_id=' + encodeURIComponent(quizId), {
+                            cache: 'no-store'
+                        })
+                        .then(function (response) {
+                            return response.json();
+                        })
+                        .then(function (data) {
+                            if (!data || typeof data.remaining_seconds !== 'number') {
+                                return;
+                            }
+
+                            const remainingSeconds = Math.max(0, Math.floor(data.remaining_seconds));
+                            if (remainingSeconds <= 0) {
+                                submitQuizOnExpiry();
+                                return;
+                            }
+
+                            const serverDeadline = Date.now() + (remainingSeconds * 1000);
+                            if (!form._serverDeadline || serverDeadline < form._serverDeadline) {
+                                form._serverDeadline = serverDeadline;
+                            }
+                        })
+                        .catch(function () {
+                            // Ignore ping failures and keep the local timer running.
+                        });
+                    };
+
                     const updateTimer = function () {
                         const remainingMs = deadline.getTime() - Date.now();
                         if (remainingMs <= 0) {
-                            timerLabel.textContent = 'Time is up';
-                            const allInputs = questionContainer.querySelectorAll('input, button');
-                            allInputs.forEach(function (element) {
-                                if (element.type === 'submit' || element.type === 'radio' || element.tagName === 'BUTTON') {
-                                    element.disabled = true;
-                                }
-                            });
-
-                            const expiredFormData = new FormData();
-                            expiredFormData.append('action', 'expire_attempt');
-                            expiredFormData.append('quiz_id', quizId);
-                            fetch(window.location.href, {
-                                method: 'POST',
-                                body: expiredFormData
-                            }).then(function () {
-                                document.querySelectorAll('.start-quiz-btn').forEach(function (button) {
-                                    button.disabled = false;
-                                    button.textContent = 'Start Attempt';
-                                });
-                                window.sessionStorage.removeItem(storageKey);
-                            });
+                            submitQuizOnExpiry();
                             return;
                         }
 
@@ -669,6 +699,7 @@ $activeQuizAttempt = $activeAttemptStmt->get_result()->fetch_assoc();
                     };
 
                     updateTimer();
+                    window.setInterval(syncFromServer, 30000);
                 }
 
                 if (hasActiveAttempt && activeStartedAt) {
@@ -678,10 +709,24 @@ $activeQuizAttempt = $activeAttemptStmt->get_result()->fetch_assoc();
                     startButton.textContent = 'Continue Attempt';
                 }
 
-                startButton.addEventListener('click', function () {
+                form.addEventListener('submit', function (event) {
+                    if (event.submitter && event.submitter.classList.contains('start-quiz-btn')) {
+                        event.preventDefault();
+                    }
+                });
+
+                startButton.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+
+                    if (startButton.disabled) {
+                        return;
+                    }
+
                     const now = new Date();
                     const startedAtValue = now.toISOString().slice(0, 19).replace('T', ' ');
                     startedAtInput.value = startedAtValue;
+                    startButton.disabled = true;
 
                     const formData = new FormData();
                     formData.append('action', 'start_attempt');
@@ -697,9 +742,15 @@ $activeQuizAttempt = $activeAttemptStmt->get_result()->fetch_assoc();
                     })
                     .then(function (result) {
                         if (!result.success) {
+                            startButton.disabled = false;
                             alert(result.message || 'Unable to start this quiz.');
                             return;
                         }
+
+                        const activeStartedAtValue = result.started_at || startedAtValue;
+                        startedAtInput.value = activeStartedAtValue;
+                        form.setAttribute('data-active-started-at', activeStartedAtValue);
+                        form.setAttribute('data-has-active-attempt', '1');
 
                         questionContainer.classList.remove('d-none');
                         timerLabel.classList.remove('d-none');
@@ -712,9 +763,10 @@ $activeQuizAttempt = $activeAttemptStmt->get_result()->fetch_assoc();
                             }
                         });
 
-                        startTimer(result.started_at || startedAtValue, true);
+                        startTimer(activeStartedAtValue, true);
                     })
                     .catch(function () {
+                        startButton.disabled = false;
                         alert('Unable to start this quiz right now.');
                     });
                 });

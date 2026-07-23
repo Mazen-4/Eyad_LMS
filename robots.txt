@@ -1,0 +1,19 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /student/
+Disallow: /includes/
+Disallow: /config/
+Disallow: /database/
+Disallow: /uploads/
+Disallow: /db_credentials.php
+Disallow: /ARCHITECTURE.md
+Disallow: /IMPLEMENTATION_PLAN.md
+Disallow: /PROJECT_OVERVIEW.md
+Disallow: /README.md
+
+# Allow general public pages
+Allow: /public/
+Allow: /index.php
+Allow: /about.php
+Allow: /contact.php
+Allow: /login.php

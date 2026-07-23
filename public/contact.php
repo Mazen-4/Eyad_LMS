@@ -20,7 +20,7 @@ $web3formsAccessKey = '1a222743-ff83-4204-8c4d-5fa84eda88ad';
     <meta property="twitter:description" content="Get in touch with Eyad Mazhar for support, questions, or general inquiries about online math preparation.">
     <title>Contact - Eyad LMS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="../assets/css/theme.css" rel="stylesheet">
+    <link href="../assets/css/theme.css?v=2" rel="stylesheet">
 </head>
 <body>
     <?php include __DIR__ . '/../includes/public_nav.php'; ?>
@@ -31,8 +31,7 @@ $web3formsAccessKey = '1a222743-ff83-4204-8c4d-5fa84eda88ad';
                 <p class="lead text-muted">For questions, support, or general inquiries, send a message through the form below.</p>
                 <p class="mb-3"><strong>Phone:</strong> 01068161808</p>
                 <div class="mt-4">
-                    <a href="index.php" class="btn btn-primary me-2">Back to Home</a>
-                    <a href="about.php" class="btn btn-outline-secondary">About the Platform</a>
+                    <a href="index.php" class="btn btn-primary">Back to Home</a>
                 </div>
             </div>
             <div class="col-lg-7">

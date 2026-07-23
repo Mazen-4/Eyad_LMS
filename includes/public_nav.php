@@ -35,7 +35,7 @@ if (isLoggedIn()) {
         <div class="collapse navbar-collapse" id="publicNav">
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item"><a class="nav-link" href="<?php echo htmlspecialchars($baseUrl, ENT_QUOTES, 'UTF-8'); ?>">Home</a></li>
-                <li class="nav-item"><a class="nav-link" href="<?php echo htmlspecialchars($baseUrl, ENT_QUOTES, 'UTF-8'); ?>about.php">About</a></li>
+
                 <li class="nav-item"><a class="nav-link" href="<?php echo htmlspecialchars($baseUrl, ENT_QUOTES, 'UTF-8'); ?>contact.php">Contact</a></li>
                 <li class="nav-item"><a class="nav-link" href="<?php echo htmlspecialchars($dashboardLink, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($dashboardLabel, ENT_QUOTES, 'UTF-8'); ?></a></li>
             </ul>

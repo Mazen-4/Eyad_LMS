@@ -10,7 +10,7 @@ $user = requireLogin(['student']);
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Student Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="../assets/css/theme.css" rel="stylesheet">
+    <link href="../assets/css/theme.css?v=2" rel="stylesheet">
 </head>
 <body>
     <?php include __DIR__ . '/../includes/student_nav.php'; ?>
@@ -53,8 +53,7 @@ $user = requireLogin(['student']);
                 <div class="card shadow-sm">
                     <div class="card-body">
                         <h5 class="card-title">More Information</h5>
-                        <p class="card-text">Open the public About and Contact pages from here.</p>
-                        <a href="../public/about.php" class="btn btn-outline-secondary btn-sm me-2">About</a>
+                        <p class="card-text">Open the public Contact page from here.</p>
                         <a href="../public/contact.php" class="btn btn-outline-secondary btn-sm">Contact</a>
                     </div>
                 </div>

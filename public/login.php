@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta property="twitter:description" content="Access your student portal for lessons, resources, and quizzes from Eyad Mazhar.">
     <title>Login - Eyad LMS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="../assets/css/theme.css" rel="stylesheet">
+    <link href="../assets/css/theme.css?v=2" rel="stylesheet">
 </head>
 <body>
     <?php include __DIR__ . '/../includes/public_nav.php'; ?>
@@ -49,8 +49,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="col-md-5">
                 <div class="card shadow-sm section-card">
                     <div class="card-body p-4">
-                        <h2 class="page-title mb-3">Eyad LMS</h2>
-                        <p class="text-light mb-3">Sign in to continue</p>
+                        <h2 class="page-title mb-3">Eng.Eyad Mazhar</h2>
+                        <p class="text-black mb-3">Sign in to continue</p>
 
                         <?php if ($error !== ''): ?>
                             <div class="alert alert-danger alert-dismissible fade show" role="alert">

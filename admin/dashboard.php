@@ -10,14 +10,14 @@ $user = requireLogin(['admin']);
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Admin Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="../assets/css/theme.css" rel="stylesheet">
+    <link href="../assets/css/theme.css?v=2" rel="stylesheet">
 </head>
 <body>
     <?php include __DIR__ . '/../includes/admin_nav.php'; ?>
 
     <div class="container py-4">
         <div class="hero-panel mb-4">
-            <h1 class="page-title mb-2">Admin Dashboard</h1>
+            <h1 class="page-light mb-2">Admin Dashboard</h1>
             <p class="text-muted mb-0">Manage students, admins, groups, sessions, resources, and quizzes from one clean workspace.</p>
         </div>
         <div class="row g-3">

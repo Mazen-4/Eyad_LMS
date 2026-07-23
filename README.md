@@ -1,18 +1,61 @@
 # Eyad LMS Documentation
 
-This document describes the current implementation of Eyad LMS, a lightweight learning management system built for Eng. Eyad Mazhar. The platform is designed to be simple, professional, and practical for a single instructor managing students, learning sessions, resources, and quizzes.
+This document describes the current implementation of Eyad LMS, a lightweight learning management system for Eng. Eyad Mazhar. The platform is designed to be simple, professional, and practical for a single instructor managing students, sessions, resources, and quizzes.
 
 ## 1. Project Overview
 
-Eyad LMS is a web-based educational portal that combines three main experiences:
+Eyad LMS is a web-based educational portal with three main experiences:
 
-- a public website for visitors and prospective students
-- an admin panel for the instructor
-- a student portal for assigned learning content
+- a public marketing website for visitors and prospective students
+- an admin panel for the instructor to manage content and users
+- a student portal for enrolled learners to access assigned content
 
-The system is intentionally focused on the core teaching workflow rather than trying to replicate a large enterprise LMS. The current version is meant to be affordable, easy to maintain, and suitable for a teacher running a small or medium-sized course program.
+The system focuses on the teacher’s daily workflow and avoids complexity while providing secure content access, quiz tracking, and administrative control.
 
-## 2. Goals of the System
+## 2. Current Site State
+
+The current version includes the following full implementation details:
+
+### Public Website
+- Home page
+- About page
+- Contact page with Web3Forms API async submission
+- Login page
+- Shared public navigation and footer
+- SEO open graph and Twitter metadata on public pages
+
+### Authentication
+- session-based login/logout
+- role-aware redirects and protected pages
+- `admin` and `student` roles supported
+- shared auth helper in `includes/auth.php`
+
+### Admin Features
+- admin dashboard with quick cards and direct student preview links
+- full student management with create/update/delete
+- group management for learning cohorts
+- session/lecture management with title, description, display order, status, and group visibility
+- PDF resource management with upload, description, status, and group access
+- quiz management with MCQ questions, image support, group access, time limits, max attempts, and extra attempts
+- admin ability to preview student-facing content and bypass group restrictions when previewing
+- activity log for student lecture views and quiz attempts
+
+### Student Portal
+- student dashboard
+- session listing filtered by student group membership
+- lecture player supporting Google Drive, YouTube, and direct media URLs
+- resource listing for assigned PDFs
+- quiz experience with start/continue behavior, attempt tracking, and result review
+- quiz review page showing selected answers, correct answers, and per-question feedback
+- change password support
+
+### Tracking and Audit
+- lecture views recorded in `lecture_views`
+- quiz submissions recorded in `quiz_attempts`
+- per-question answer records stored in `quiz_attempt_answers`
+- admin-accessible audit and review flows for student activity
+
+## 3. Goals of the System
 
 The implementation aims to provide:
 
@@ -20,53 +63,9 @@ The implementation aims to provide:
 - flexible group-based access control for educational content
 - a clean student experience for sessions, PDFs, and quizzes
 - a simple admin workflow for managing all core LMS data
-- responsive layouts that work well on desktop and mobile devices
-- improved quiz workflows with attempt tracking, timers, and history
-
-## 3. What Has Been Implemented
-
-The current codebase includes the following completed features:
-
-### Public Website
-- Home page with a modern landing experience
-- About page
-- Contact page with a completed contact form using Web3Forms API and async form submission
-- Login page with improved visibility for username/password labels and hidden helper text
-- Shared navigation and footer components
-- Branding and logo integration
-
-### Authentication and Access Control
-- session-based authentication
-- login/logout flow
-- role-based redirection for admin and student users
-- protected pages for admin and student sections
-- student group information loaded from the database during the session
-- metadata tags added to public pages for better SEO and social preview (Open Graph + Twitter cards)
-
-### Admin Panel
-- admin dashboard with quick access cards for Students, Admins, Groups, Sessions, Resources, and Quizzes
-- student management with create, update, delete, and multi-group assignment
-- group management for organizing students into learning cohorts
-- session/lecture management with title, description, display order, status, and group visibility
-- resource management with PDF upload, description, status, and group visibility
-- quiz management with MCQ questions, image support, group access, time limits, attempt limits, extra-attempt overrides, and question removal during quiz editing
-- minimal admin account creation for additional administrators
-
-### Student Portal
-- student dashboard
-- session listing filtered by all groups assigned to the student
-- lecture/player experience with support for direct video files, YouTube links, Google Drive links, and Drive folders
-- experimental lecture player security overlay to discourage recording and screenshot capture, based on visibility, blur, keyboard shortcuts, and player interaction events (prototype only)
-- resource listing for PDFs assigned to the student’s groups
-- quiz experience with start/continue functionality, timer support, attempt history, score percentages, and dismissible feedback
-- password change flow for students
-
-### Latest Site State Notes
-- Contact form now sends messages through Web3Forms with browser-side async handling and button feedback.
-- Public pages include SEO and social metadata tags for Open Graph and Twitter.
-- Login page text and helper labels were fixed so low-contrast hidden text is visible.
-- Quiz editing now supports removing individual questions and optionally removing associated images.
-- The lecture player includes a black overlay prototype to discourage screen recording, but it is not a production-secure recording protection solution.
+- responsive layouts for desktop and mobile
+- quiz tracking and review for students and admins
+- admin preview access that does not require group membership
 
 ## 4. Technology Stack
 
@@ -79,11 +78,12 @@ The current codebase includes the following completed features:
 ### Backend
 - PHP 8+
 - MySQL / MariaDB
-- Apache through WAMP/XAMPP
+- Apache via WAMP/XAMPP
 
 ### Other Notes
-- The UI uses a simple, modern, academic-style design with shared layout partials.
-- The project relies on PHP sessions and MySQL for persistence.
+- The project uses PHP sessions for authentication
+- The UI reuses shared header/footer partials for consistency
+- Content access is enforced via group membership and role checks
 
 ## 5. Project Structure
 
@@ -91,80 +91,66 @@ The current codebase includes the following completed features:
 Eyad_LMS/
 ├── admin/                # admin pages
 ├── student/              # student portal pages
-├── public/               # public pages such as home/about/contact/login
+├── public/               # public marketing pages
 ├── includes/             # shared layout and auth helpers
-├── config/               # database and environment configuration
+├── config/               # database and application configuration
 ├── assets/               # CSS and front-end assets
-├── uploads/              # uploaded PDF resources and quiz images
-├── Images/               # branding/logo assets
+├── uploads/              # uploaded PDFs and quiz images
+├── database/             # database schema or scripts
 └── README.md             # project documentation
 ```
 
 ## 6. Core Application Modules
 
-### 6.1 Public Pages
-The public experience is available to anyone without authentication.
-
-Pages include:
+### Public Pages
+Public pages are available without login and include:
 - Home
 - About
 - Contact
 - Login
 
-These pages are designed to act as a simple entrance point into the LMS and provide a professional public-facing presence.
-
-### 6.2 Admin Pages
-The admin area is restricted to users with the admin role.
-
-Available admin modules:
+### Admin Pages
+Restricted to `admin` users. Available modules:
 - Dashboard
 - Students
 - Groups
 - Sessions
 - Resources
 - Quizzes
-- Admins
+- Activity Log
 
-Admin users can manage the full learning content lifecycle from one panel.
+Admins can manage all learning content, users, and preview the student experience.
 
-### 6.3 Student Pages
-The student area is restricted to users with the student role.
-
-Available student modules:
+### Student Pages
+Restricted to `student` users. Available modules:
 - Dashboard
 - Sessions
 - Resources
 - Quizzes
+- Quiz Review
 - Change Password
 
-Students see content assigned to any group they belong to, which allows broader access when they are linked to multiple groups.
+Students see content assigned to the groups they belong to.
 
-## 7. Authentication and Authorization Model
+## 7. Authentication and Authorization
 
-Authentication is handled through the shared auth helper in the includes folder.
-
-### How it works
-- Users log in with a username and password.
-- Passwords are verified using PHP password hashing.
-- A session is created with the user identity and role.
-- The application redirects users to the correct dashboard based on their role.
+Authentication is handled via the shared auth helper in `includes/auth.php`.
 
 ### Roles
-- admin: full access to the admin panel and management features
-- student: access only to allowed student portal pages and assigned content
+- `admin`: full access to admin pages and preview content
+- `student`: access only student portal pages and assigned content
 
-### Access control behavior
-- Students can access sessions, resources, and quizzes assigned to any group they belong to.
-- Admin users can manage all content regardless of group.
+### Access Behavior
+- Student content is filtered by group membership
+- Admins can bypass group restrictions when using preview links
+- Admins and students both log in through the same login page
 
 ## 8. Database Design
 
-The system uses a MySQL database with the following main tables:
-
 ### users
-Stores user accounts for admins and students.
+Stores admin and student accounts.
 
-Important fields include:
+Fields include:
 - id
 - name
 - username
@@ -176,14 +162,13 @@ Important fields include:
 - status
 
 ### groups
-Stores learning groups.
-
-Used to control student access to lectures, resources, and quizzes.
+Defines learning groups and cohorts.
 
 ### lectures
-Stores lecture records.
+Stores session/lecture records.
 
-Contains:
+Fields include:
+- id
 - title
 - description
 - drive_folder_id
@@ -191,24 +176,26 @@ Contains:
 - status
 
 ### lecture_folder_access
-Links lectures to the groups that should be able to view them.
+Links lectures to groups for access control.
 
 ### resources
 Stores PDF resource records.
 
-Contains:
+Fields include:
+- id
 - title
 - description
 - pdf_path
 - status
 
 ### resource_group_access
-Links resources to the groups that can access them.
+Links resources to groups.
 
 ### quizzes
 Stores quiz metadata.
 
-Contains:
+Fields include:
+- id
 - title
 - group_id
 - status
@@ -216,47 +203,87 @@ Contains:
 - max_attempts
 
 ### quiz_group_access
-Links quizzes to the groups that can access them.
+Links quizzes to groups.
 
 ### questions
-Stores MCQ questions for each quiz.
+Stores quiz questions.
 
-Contains:
+Fields include:
+- id
+- quiz_id
 - question
-- choice_1 to choice_4
+- choice_1
+- choice_2
+- choice_3
+- choice_4
 - correct_answer
 - image_path
 
 ### quiz_attempts
-Tracks student quiz submissions and scores.
+Tracks student quiz submissions.
 
-### quiz_extra_attempts
-Stores admin-granted extra quiz attempts for specific students.
+Fields include:
+- id
+- student_id
+- quiz_id
+- score
+- total_questions
+- score_percent
+- submitted_at
+- started_at
+- status
 
-## 9. Core Workflows
+### quiz_attempt_answers
+Stores individual selected answers for each quiz attempt.
 
-### 9.1 Admin Workflow
+### lecture_views
+Stores lecture view history for audit and reporting.
+
+## 9. Recent Feature Additions
+
+- Admin dashboard now includes direct student preview cards linking to the student portal.
+- Admin preview pages now allow admins to view all sessions, resources, and quizzes regardless of group restrictions.
+- Student quiz review was added so users can see their selected answer, correct answer, and question-level feedback.
+- Activity logging was added to capture student lecture views and quiz attempts for audit purposes.
+- The quiz engine now stores submitted answer details and supports reviewing past attempts.
+
+## 10. Core Workflows
+
+### Admin Workflow
 An admin user can:
+1. Create and edit student accounts
+2. Assign students to one or more groups
+3. Create learning groups
+4. Add sessions/lectures and assign them to groups
+5. Upload PDF resources and assign them to groups
+6. Build quizzes and manage questions
+7. Grant extra quiz attempts to students
+8. Review student activity through the admin activity log
 
-1. Create student accounts and assign them to one or more groups.
-2. Create learning groups such as Basic, Advanced 1, and Advanced 2.
-3. Add sessions/lectures and connect them to one or more groups.
-4. Upload PDF resources and assign them to groups.
-5. Create quizzes with multiple questions and correct answers.
-6. Set time limits and maximum attempts for quizzes.
-7. Grant extra attempts to students when needed.
-8. Create additional admin accounts when needed.
-
-### 9.2 Student Workflow
+### Student Workflow
 A student user can:
+1. Log in to the student portal
+2. View assigned sessions
+3. Open the session player
+4. Download or view assigned PDFs
+5. Start or continue quizzes
+6. Submit quizzes and review results
+7. Change their password
 
-1. Log in to the student portal.
-2. View sessions assigned to any group they belong to.
-3. Open session content through the session viewer.
-4. Download or view PDF resources assigned to their groups.
-5. Start, continue, and complete quizzes available for their groups.
-6. Review previous quiz attempts and scores.
-7. Change their password.
+## 11. Notes for Developers
+
+- `includes/auth.php` controls authentication and role enforcement.
+- Student-facing pages use group membership to restrict content.
+- Admin preview behavior is intentionally implemented to bypass these restrictions for demo and audit purposes.
+- The lecture player resolves Google Drive, YouTube, and direct media links.
+- The contact form uses Web3Forms for public message delivery.
+
+## 12. Recommended Deployment Notes
+
+- Use PHP 8+ and MySQL/MariaDB.
+- Keep `config/database.php` credentials secure and out of public access.
+- Protect admin and student directories with proper session-based auth.
+- Review `robots.txt` to ensure sensitive paths are not exposed to crawlers.
 
 ## 10. Lecture Handling
 
