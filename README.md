@@ -1,435 +1,310 @@
-# Eyad LMS Documentation
 
-This document describes the current implementation of Eyad LMS, a lightweight learning management system for Eng. Eyad Mazhar. The platform is designed to be simple, professional, and practical for a single instructor managing students, sessions, resources, and quizzes.
+<div align="center">
+	<img src="Images/eyad_logo1.jpeg" alt="Eng. Eyad Mazhar logo" width="112" height="112" />
 
-## 1. Project Overview
+	# Eyad LMS
 
-Eyad LMS is a web-based educational portal with three main experiences:
+	**A focused learning platform for American Mathematics students**
 
-- a public marketing website for visitors and prospective students
-- an admin panel for the instructor to manage content and users
-- a student portal for enrolled learners to access assigned content
+	Public website, protected student portal, and practical admin workspace for Eng. Eyad Mazhar.
 
-The system focuses on the teacher’s daily workflow and avoids complexity while providing secure content access, quiz tracking, and administrative control.
+	<p>
+		<img src="https://img.shields.io/badge/PHP-8%2B-777BB4?logo=php&logoColor=white" alt="PHP 8+" />
+		<img src="https://img.shields.io/badge/Bootstrap-5.3.3-7952B3?logo=bootstrap&logoColor=white" alt="Bootstrap 5.3.3" />
+		<img src="https://img.shields.io/badge/MySQL%20%2F%20MariaDB-Database-4479A1?logo=mysql&logoColor=white" alt="MySQL or MariaDB" />
+		<img src="https://img.shields.io/badge/Responsive-Desktop%20%7C%20Tablet%20%7C%20Mobile-198754" alt="Responsive interface" />
+	</p>
+</div>
 
-## 2. Current Site State
+Eyad LMS is a lightweight learning management system and public website for **Eng. Eyad Mazhar**, an American Mathematics instructor in Egypt. It combines a public information site with protected admin and student portals for managing and consuming sessions, PDF resources, and multiple-choice quizzes.
 
-The current version includes the following full implementation details:
+The current implementation is intentionally small and practical. Students do not register or pay through the site: the teacher creates their accounts and assigns their learning access.
 
-### Public Website
-- Home page
-- About page
-- Contact page with Web3Forms API async submission
-- Login page
-- Shared public navigation and footer
-- SEO open graph and Twitter metadata on public pages
+## At A Glance
 
-### Authentication
-- session-based login/logout
-- role-aware redirects and protected pages
-- `admin` and `student` roles supported
-- shared auth helper in `includes/auth.php`
+| Experience | Purpose | Access |
+| --- | --- | --- |
+| **Public website** | Introduce the instructor, programs, and contact options | Everyone |
+| **Admin workspace** | Manage students, groups, sessions, resources, quizzes, and activity | `admin` role |
+| **Student portal** | Watch sessions, access PDFs, take quizzes, and review results | `student` role |
 
-### Admin Features
-- admin dashboard with quick cards and direct student preview links
-- full student management with create/update/delete
-- group management for learning cohorts
-- session/lecture management with title, description, display order, status, and group visibility
-- PDF resource management with upload, description, status, and group access
-- quiz management with MCQ questions, image support, group access, time limits, max attempts, and extra attempts
-- admin ability to preview student-facing content and bypass group restrictions when previewing
-- activity log for student lecture views and quiz attempts
+### What Makes It Useful
 
-### Student Portal
-- student dashboard
-- session listing filtered by student group membership
-- lecture player supporting Google Drive, YouTube, and direct media URLs
-- resource listing for assigned PDFs
-- quiz experience with start/continue behavior, attempt tracking, and result review
-- quiz review page showing selected answers, correct answers, and per-question feedback
-- change password support
+- **Group-aware delivery** - assign students to one or more learning groups and show each group its own content.
+- **External-first media** - keep videos on Google Drive, YouTube, or another media host instead of filling local hosting storage.
+- **Teacher-friendly quiz control** - support timers, attempt limits, extra attempts, question images, scoring, and detailed review.
+- **Operational visibility** - record session views and quiz activity so the teacher can understand how content is being used.
 
-### Tracking and Audit
-- lecture views recorded in `lecture_views`
-- quiz submissions recorded in `quiz_attempts`
-- per-question answer records stored in `quiz_attempt_answers`
-- admin-accessible audit and review flows for student activity
+## Contents
 
-## 3. Goals of the System
+- [Current Website](#current-website)
+- [Roles and Access Control](#roles-and-access-control)
+- [Admin Workflows](#admin-workflows)
+- [Student Workflows](#student-workflows)
+- [Technology](#technology)
+- [Project Structure](#project-structure)
+- [Database Tables](#database-tables)
+- [Installation](#installation)
+- [Security and Operational Notes](#security-and-operational-notes)
+- [Hosting Model and Limitations](#hosting-model-and-limitations)
 
-The implementation aims to provide:
+## Current Website
 
-- secure login for admins and students
-- flexible group-based access control for educational content
-- a clean student experience for sessions, PDFs, and quizzes
-- a simple admin workflow for managing all core LMS data
-- responsive layouts for desktop and mobile
-- quiz tracking and review for students and admins
-- admin preview access that does not require group membership
+### Public website
 
-## 4. Technology Stack
+The public area is available without authentication:
 
-### Frontend
-- HTML5
-- CSS3
-- JavaScript
-- Bootstrap 5
+- `public/index.php` - home page for American Math, EST, DSAT, and ACT preparation
+- `public/about.php` - instructor and platform information
+- `public/contact.php` - contact form submitted asynchronously through Web3Forms
+- `public/login.php` - shared username/password login for admins and students
+- `index.php` - redirects visitors to `public/index.php`
 
-### Backend
-- PHP 8+
-- MySQL / MariaDB
-- Apache via WAMP/XAMPP
+The public pages use shared navigation and footer partials, responsive Bootstrap components, the project theme, and page metadata for search engines and social previews. The login page is marked `noindex`; the home, about, and contact pages are indexable.
 
-### Other Notes
-- The project uses PHP sessions for authentication
-- The UI reuses shared header/footer partials for consistency
-- Content access is enforced via group membership and role checks
+### Admin portal
 
-## 5. Project Structure
+All admin pages require the `admin` role. The shared admin navigation provides:
+
+- `admin/dashboard.php` - administrative home page and links to every module
+- `admin/students.php` - create, edit, transfer, deactivate, and delete student accounts
+- `admin/admins.php` - create, edit, deactivate, and delete additional admin accounts
+- `admin/groups.php` - create, edit, and delete learning groups with a level label
+- `admin/lectures.php` - manage sessions, descriptions, order, active status, and group access
+- `admin/resources.php` - upload, edit, activate/deactivate, assign, and delete PDF resources
+- `admin/quizzes.php` - create and edit quizzes, questions, images, access, limits, and overrides
+- `admin/activity_log.php` - review lecture views and completed or expired quiz attempts
+
+The dashboard also includes student-facing previews for sessions, resources, and quizzes. Preview requests use `?preview=1`; an admin can see active content without needing to belong to its assigned groups.
+
+### Student portal
+
+Student pages require the `student` role unless explicitly noted as supporting admin preview:
+
+- `student/dashboard.php` - student portal home
+- `student/lectures.php` - active sessions available to the student's groups
+- `student/lecture_player.php` - protected session player and view tracking
+- `student/resources.php` - active PDF resources available to the student's groups
+- `student/quizzes.php` - quiz listing, attempt start/continue, submission, scoring, and attempt status
+- `student/quiz_review.php` - score and question-by-question result review
+- `student/change_password.php` - change the logged-in student's password
+
+Supporting protected endpoints include `student/quiz_time_check.php`, `student/proxy_media.php`, and `student/widevine_license.php`. The Widevine endpoint is currently a placeholder and is not a complete DRM license service.
+
+## Roles and Access Control
+
+Authentication is implemented in `includes/auth.php` with PHP sessions and password verification using `password_verify()`.
+
+- **Admin**: can use all admin modules, access active student content for preview, and review activity and quiz attempts.
+- **Student**: can use the student portal and only see active sessions, resources, and quizzes assigned to their groups.
+
+There is no self-registration, email verification, approval workflow, online payment, or public account recovery flow. The teacher creates accounts and gives students their credentials.
+
+Students support both a primary `users.group_id` assignment and additional memberships in `user_group_access`. The application combines both sources, removes duplicates, and uses the resulting group list for content filtering. Content can also have a primary group plus additional access rows:
+
+- sessions use `lecture_folder_access`
+- resources use `resource_group_access`
+- quizzes use `quiz_group_access`
+
+Inactive content is excluded from normal student listings and direct access checks.
+
+## Admin Workflows
+
+### Students and admins
+
+Student records contain a name, username, hashed password, phone, parent phone, primary group, role, and active/inactive status. Admins can create and edit student credentials, change the primary group, manage additional group membership, and remove student accounts.
+
+Admin records use the same `users` table with `role = admin`. Admins can create multiple admin accounts, update usernames and names, change passwords, toggle status, and delete admin records.
+
+### Groups
+
+Groups represent cohorts or learning tracks rather than school grades. Each group has a name and level, such as `Morning Batch` and `Advanced 1`. Groups are used as the access-control layer for all learning content.
+
+### Sessions
+
+The admin interface labels lectures as **Sessions**. Each session has:
+
+- title
+- optional description
+- external media or Google Drive reference
+- display order
+- active/inactive status
+- one or more allowed groups
+
+Sessions are not stored as video files on the hosting account. The player accepts Google Drive file URLs, Google Drive folder URLs, Drive IDs, YouTube URLs, and direct video URLs. Google Drive file and folder references are normalized before rendering.
+
+### Resources
+
+Resources are PDF files uploaded to `uploads/pdfs/`. Each resource has a title, optional description, active/inactive status, and one or more allowed groups. A new resource must contain a valid PDF no larger than 20 MB. The server checks both the file extension and detected MIME type. Replacing or deleting a resource also removes the stored old PDF when possible.
+
+### Quizzes
+
+Admins can create and edit active or inactive MCQ quizzes. A quiz includes:
+
+- title
+- one or more allowed groups
+- optional time limit in minutes; `0` means no time limit
+- optional maximum attempts; `0` means unlimited attempts
+- one or more questions
+
+Each question contains question text, four choices, one correct choice, and an optional JPG, JPEG, PNG, or GIF image. Quiz images are limited to 2 MB and are validated by extension and MIME type. Editing replaces the question set and cleans up removed images. Deleting a quiz also removes its questions, stored question images, access rows, attempts, and related quiz access records.
+
+Admins can grant a student extra attempts for a specific quiz and optionally record a reason. Existing overrides are updated rather than duplicated. The quiz management page also displays extra-attempt overrides and a recent attempt summary.
+
+### Activity log
+
+The activity log combines up to the 200 most recent records from:
+
+- `lecture_views` - session view events, deduplicated so the same student/session is not recorded more than once within ten minutes
+- `quiz_attempts` - submitted and expired attempts, including score, percentage, and status
+
+The page displays total lecture views, total non-in-progress quiz attempts, student identity, item title, action, details, and timestamp.
+
+## Student Workflows
+
+### Sessions and media
+
+Students see active sessions assigned to at least one of their groups. Opening a session checks the same access rule and records a view event. The player can render:
+
+- Google Drive file previews
+- Google Drive folders
+- YouTube embeds
+- direct MP4, WebM, OGG, M4V, and MOV sources
+- other external links when the source cannot be classified more specifically
+
+The player is responsive and changes its frame height for smaller screens. It also includes best-effort client-side recording and capture deterrents such as focus/visibility detection, screenshot and print shortcut handling, a recording warning overlay, disabled context-menu behavior, and blocked `window.open` calls. These browser controls are deterrents only and do not provide guaranteed DRM, copying prevention, or screenshot prevention.
+
+### Resources
+
+Students see only active PDFs assigned to their groups. The resource page provides the available file links and descriptions.
+
+### Quizzes
+
+Students can:
+
+1. View active quizzes assigned to any of their groups.
+2. Start a new attempt or continue the existing in-progress attempt.
+3. Submit answers to four-choice questions, including unanswered questions.
+4. Receive a score and percentage calculated from the stored correct answers.
+5. Have timed-out attempts marked `expired` with a zero score.
+6. Review submitted or expired attempts.
+
+Only one quiz can be in progress for a student at a time. A timed quiz uses its stored start time and the configured limit; attempts are checked for expiry when quiz pages and supporting time checks are requested. The available attempt count is the quiz limit plus any student-specific extra attempts. A zero limit means unlimited attempts.
+
+Quiz reviews show the score, percentage, submission time, status, question text, optional image, selected answer, correct answer, and highlighted answer choices. Per-question records are stored so the review remains tied to the submitted attempt.
+
+### Password changes
+
+An authenticated student can update their password from `student/change_password.php`. The new password is stored using PHP password hashing.
+
+## Technology
+
+- PHP 8 or newer
+- MySQL or MariaDB
+- Apache, commonly through WAMP or XAMPP
+- HTML5, CSS3, and JavaScript
+- Bootstrap 5.3.3 loaded from jsDelivr
+- MySQLi prepared statements and `utf8mb4` connections
+- PHP sessions for authentication
+- Web3Forms for public contact submissions
+
+The interface is responsive for desktop, tablet, and mobile layouts. Shared navigation files load the Bootstrap bundle and use `assets/css/theme.css` for the application theme.
+
+## Project Structure
 
 ```text
 Eyad_LMS/
-├── admin/                # admin pages
-├── student/              # student portal pages
-├── public/               # public marketing pages
-├── includes/             # shared layout and auth helpers
-├── config/               # database and application configuration
-├── assets/               # CSS and front-end assets
-├── uploads/              # uploaded PDFs and quiz images
-├── database/             # database schema or scripts
-└── README.md             # project documentation
+├── admin/                 # admin-only management pages
+├── assets/css/            # shared theme stylesheet
+├── config/                # database connection and application setup
+├── database/              # reserved for database scripts; currently empty
+├── Images/                # branding image assets
+├── includes/              # authentication and shared navigation/footer partials
+├── public/                # public home, about, contact, and login pages
+├── student/               # student portal and protected media endpoints
+├── uploads/pdfs/          # uploaded resource PDFs
+├── uploads/quizzes/       # uploaded quiz question images
+├── db_credentials.php     # optional local/hosting database credentials file
+├── index.php              # redirect to public/index.php
+├── logout.php             # session logout endpoint
+├── robots.txt             # crawler directives
+└── README.md              # this documentation
 ```
 
-## 6. Core Application Modules
+## Database Tables
 
-### Public Pages
-Public pages are available without login and include:
-- Home
-- About
-- Contact
-- Login
+There is currently no SQL dump in `database/`. Several application pages create or upgrade supporting tables with `CREATE TABLE IF NOT EXISTS` and `ALTER TABLE` statements when they are accessed. The configured database must still exist, and the foundational tables used by the application must be available before normal operation.
 
-### Admin Pages
-Restricted to `admin` users. Available modules:
-- Dashboard
-- Students
-- Groups
-- Sessions
-- Resources
-- Quizzes
-- Activity Log
+The current application uses these tables:
 
-Admins can manage all learning content, users, and preview the student experience.
+- `users` - admin and student accounts, credentials, roles, status, and primary group
+- `groups` - group names and level labels
+- `user_group_access` - additional student-to-group memberships
+- `lectures` - session metadata and external media references
+- `lecture_folder_access` - session-to-group access rows
+- `resources` - PDF metadata and stored paths
+- `resource_group_access` - resource-to-group access rows
+- `quizzes` - quiz title, primary group, status, time limit, and attempt limit
+- `quiz_group_access` - additional quiz-to-group access rows
+- `questions` - question text, four choices, correct answer, and optional image path
+- `quiz_attempts` - student attempt lifecycle, score, percentage, timestamps, and status
+- `quiz_attempt_answers` - selected and correct answer state per question and attempt
+- `quiz_extra_attempts` - student-specific attempt allowances and reasons
+- `lecture_views` - session view history
 
-### Student Pages
-Restricted to `student` users. Available modules:
-- Dashboard
-- Sessions
-- Resources
-- Quizzes
-- Quiz Review
-- Change Password
+The application creates the tracking and access tables as needed in the relevant pages. Existing quiz tables are also upgraded with fields such as `started_at`, `status`, `total_questions`, `score_percent`, `time_limit_minutes`, and `max_attempts` when those columns are missing.
 
-Students see content assigned to the groups they belong to.
+## Installation
 
-## 7. Authentication and Authorization
+### Requirements
 
-Authentication is handled via the shared auth helper in `includes/auth.php`.
-
-### Roles
-- `admin`: full access to admin pages and preview content
-- `student`: access only student portal pages and assigned content
-
-### Access Behavior
-- Student content is filtered by group membership
-- Admins can bypass group restrictions when using preview links
-- Admins and students both log in through the same login page
-
-## 8. Database Design
-
-### users
-Stores admin and student accounts.
-
-Fields include:
-- id
-- name
-- username
-- password
-- phone
-- parent_phone
-- group_id
-- role
-- status
-
-### groups
-Defines learning groups and cohorts.
-
-### lectures
-Stores session/lecture records.
-
-Fields include:
-- id
-- title
-- description
-- drive_folder_id
-- display_order
-- status
-
-### lecture_folder_access
-Links lectures to groups for access control.
-
-### resources
-Stores PDF resource records.
-
-Fields include:
-- id
-- title
-- description
-- pdf_path
-- status
-
-### resource_group_access
-Links resources to groups.
-
-### quizzes
-Stores quiz metadata.
-
-Fields include:
-- id
-- title
-- group_id
-- status
-- time_limit_minutes
-- max_attempts
-
-### quiz_group_access
-Links quizzes to groups.
-
-### questions
-Stores quiz questions.
-
-Fields include:
-- id
-- quiz_id
-- question
-- choice_1
-- choice_2
-- choice_3
-- choice_4
-- correct_answer
-- image_path
-
-### quiz_attempts
-Tracks student quiz submissions.
-
-Fields include:
-- id
-- student_id
-- quiz_id
-- score
-- total_questions
-- score_percent
-- submitted_at
-- started_at
-- status
-
-### quiz_attempt_answers
-Stores individual selected answers for each quiz attempt.
-
-### lecture_views
-Stores lecture view history for audit and reporting.
-
-## 9. Recent Feature Additions
-
-- Admin dashboard now includes direct student preview cards linking to the student portal.
-- Admin preview pages now allow admins to view all sessions, resources, and quizzes regardless of group restrictions.
-- Student quiz review was added so users can see their selected answer, correct answer, and question-level feedback.
-- Activity logging was added to capture student lecture views and quiz attempts for audit purposes.
-- The quiz engine now stores submitted answer details and supports reviewing past attempts.
-
-## 10. Core Workflows
-
-### Admin Workflow
-An admin user can:
-1. Create and edit student accounts
-2. Assign students to one or more groups
-3. Create learning groups
-4. Add sessions/lectures and assign them to groups
-5. Upload PDF resources and assign them to groups
-6. Build quizzes and manage questions
-7. Grant extra quiz attempts to students
-8. Review student activity through the admin activity log
-
-### Student Workflow
-A student user can:
-1. Log in to the student portal
-2. View assigned sessions
-3. Open the session player
-4. Download or view assigned PDFs
-5. Start or continue quizzes
-6. Submit quizzes and review results
-7. Change their password
-
-## 11. Notes for Developers
-
-- `includes/auth.php` controls authentication and role enforcement.
-- Student-facing pages use group membership to restrict content.
-- Admin preview behavior is intentionally implemented to bypass these restrictions for demo and audit purposes.
-- The lecture player resolves Google Drive, YouTube, and direct media links.
-- The contact form uses Web3Forms for public message delivery.
-
-## 12. Recommended Deployment Notes
-
-- Use PHP 8+ and MySQL/MariaDB.
-- Keep `config/database.php` credentials secure and out of public access.
-- Protect admin and student directories with proper session-based auth.
-- Review `robots.txt` to ensure sensitive paths are not exposed to crawlers.
-
-## 10. Lecture Handling
-
-Lectures are intended to be hosted externally, typically through Google Drive.
-
-The admin can enter:
-- a Google Drive folder URL
-- a Google Drive file URL
-- a direct video URL
-- a simple Drive folder ID
-
-The student lecture player then attempts to display the content appropriately. This keeps storage usage low and makes the system easier to maintain.
-
-## 11. Resource Handling
-
-Resources are PDF files uploaded by the admin.
-
-They are stored in the uploads/pdfs folder and linked to one or more groups. Students only see resources allowed for their own group.
-
-The current implementation validates:
-- file type (PDF only)
-- file size (maximum 20MB)
-- upload success
-
-## 12. Quiz Handling
-
-The quiz system is currently a simple MCQ implementation.
-
-### Supported features
-- multiple questions per quiz
-- four answer choices per question
-- correct answer selection
-- optional question images
-- group-based quiz availability
-- time-limit support
-- attempt-limit support
-- extra-attempt overrides from admin
-- quiz attempt tracking with score percentages and status history
-
-### Student quiz behavior
-- Students can start an attempt.
-- They may continue an in-progress attempt.
-- The system uses the selected answers to calculate a score.
-- Results are stored in the quiz_attempts table.
-- Students can view their previous attempts and see whether a quiz was not attempted yet.
-- The student interface also shows dismissible success/error feedback and a countdown timer when a time limit is active.
-
-## 13. Installation and Setup
-
-### Prerequisites
 - PHP 8+
-- MySQL / MariaDB
-- Apache server (WAMP/XAMPP recommended on Windows)
+- Apache with PHP enabled
+- MySQL or MariaDB
+- PHP extensions used by the application, including MySQLi, fileinfo, and sessions
 
-### Setup Steps
-1. Place the project in your local web server directory, for example:
-   - C:\wamp64\www\Eyad_LMS
+### Local setup on WAMP
 
-2. Create a MySQL database, for example:
-   - eyad_lms
+1. Place the project in the web root, for example `C:\\wamp64\\www\\Eyad_LMS`.
+2. Start Apache and MySQL from WAMP.
+3. Create a database named `eyad_lms`, or choose another name and configure it below.
+4. Configure credentials in `db_credentials.php` or through `DB_HOST`, `DB_PORT`, `DB_SOCKET`, `DB_USER`, `DB_PASS`, and `DB_NAME` environment variables.
+5. Ensure `uploads/pdfs/` and `uploads/quizzes/` are writable by the web server.
+6. Create at least one admin row in `users` with `role = 'admin'`, an active status, and a password generated with PHP `password_hash()`.
+7. Open `http://localhost/Eyad_LMS/` or `http://localhost/Eyad_LMS/public/index.php`.
 
-3. Configure the database connection in config/database.php or by setting environment variables:
-   - DB_HOST
-   - DB_USER
-   - DB_PASS
-   - DB_NAME
+For local requests whose host contains `localhost`, `config/database.php` uses the local defaults `localhost`, user `root`, an empty password, database `eyad_lms`, and port `3306`. Explicit environment variables or the optional credentials file are intended for other environments. Keep credentials outside version control and outside publicly downloadable locations.
 
-4. Start Apache and MySQL.
+## Security and Operational Notes
 
-5. Open the project in the browser:
-   - http://localhost/Eyad_LMS/public/index.php
+Implemented protections include:
 
-6. Create an initial admin account in the users table with role = admin.
+- password hashing and verification
+- session-based authentication and logout
+- role checks on protected pages
+- group checks on student content and direct content URLs
+- prepared statements for database operations
+- HTML escaping for rendered user/database values
+- PDF and image extension, MIME, and size validation
+- generated randomized upload filenames
+- active/inactive checks for accounts and content
 
-### Note on database initialization
-The application uses CREATE TABLE IF NOT EXISTS statements in several admin pages, so many database tables can be created automatically when those pages are first accessed. A formal SQL dump is not required for the basic setup flow.
+The application is a lightweight educational portal and still needs production hardening before public deployment. In particular, the current code does not provide a complete DRM system, guaranteed screenshot or recording prevention, CSRF tokens on forms, rate limiting, email-based recovery, or a formal migration/backup system. The public Web3Forms integration also depends on the external service being available.
 
-## 14. Configuration Notes
+## Hosting Model and Limitations
 
-The main database configuration is defined in config/database.php.
+The intended low-cost hosting model keeps videos on external providers and stores only application data, PDFs, and quiz images locally. Google Drive is the primary session-hosting workflow, while the player also supports YouTube and direct media URLs.
 
-The file currently uses:
-- environment variables when available
-- fallback values for local development
+The current version does not include:
 
-If your local setup uses a different username, password, or database name, update the values there accordingly.
-
-## 15. File Uploads and Storage
-
-Uploaded files are stored under the uploads folder:
-
-- uploads/pdfs for resource PDFs
-- uploads/quizzes for quiz question images
-
-These directories should be writable by the web server.
-
-## 16. Security Notes
-
-The current implementation includes several basic security practices:
-
-- password hashing for user credentials
-- session-based login checks
-- role-based access restrictions
-- file validation for uploaded PDFs and images
-
-However, the project is still a lightweight educational portal and should be hardened further before production use in a public environment.
-
-## 17. Current Limitations
-
-This version intentionally stays simple. It does not currently include:
-
-- self-registration
-- email verification
-- online payments
-- advanced analytics
-- live video streaming
+- student self-registration
+- online payments or subscription billing
+- email verification or password reset by email
+- automated enrollment or approval workflows
+- gradebook, attendance, certificates, or advanced analytics
+- randomized questions or negative marking
+- a complete DRM/license server
+- device-count enforcement
+- a formal database schema file or migration runner
 - complex grading rules
-- fully expanded permissions beyond admin/student roles
-- fully completed recording/screenshot protection for the lecture player (the current black overlay is a prototype and not a production-proof solution)
-
-## 18. Deployment Checklist
-
-Before deploying the project to a live server, confirm the following:
-
-- the database connection is correct
-- the uploads folders are writable
-- PHP extensions needed for file handling and MySQL are enabled
-- the site is served over HTTPS
-- admin credentials are created securely
-- student content access is tested end to end
-
-## 19. Future Enhancements
-
-The current implementation can be extended in many ways, including:
-
-- progress tracking
-- certificates
-- attendance tracking
-- homework submission
-- notifications
-- discussion boards
-- richer analytics
-- multi-teacher support
-- more advanced quiz behavior
-
-## 20. Summary
-
-Eyad LMS is now a functional, simple, and practical learning platform for a single instructor. It covers the core education workflow needed for a teacher to manage students, multi-group access, learning sessions, resources, quizzes, and student progress in one place.
 
