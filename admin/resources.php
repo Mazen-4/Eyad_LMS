@@ -111,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $success = 'Resource updated successfully.';
             } else {
                 $stmt = $conn->prepare('INSERT INTO resources (title, description, pdf_path, status) VALUES (?, ?, ?, ?)');
-                $stmt->bind_param('sssi', $title, $description, $pdfPath, $status);
+                $stmt->bind_param('ssss', $title, $description, $pdfPath, $status);
                 $stmt->execute();
                 $resourceId = $stmt->insert_id;
 
@@ -243,12 +243,16 @@ if ($editingResourceId > 0) {
                     </div>
                     <div class="col-12">
                         <label class="form-label">Visible to Groups</label>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input select-all-groups" type="checkbox" id="select_all_resource_groups">
+                            <label class="form-check-label" for="select_all_resource_groups">Select all groups</label>
+                        </div>
                         <div class="row g-2">
                             <?php foreach ($groups as $group): ?>
                                 <?php $groupId = (int)$group['id']; ?>
                                 <div class="col-md-3">
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="group_ids[]" value="<?php echo $groupId; ?>" id="resource_group_<?php echo $groupId; ?>" <?php echo $editingResource && isset($selectedGroupIds[$groupId]) ? 'checked' : ''; ?>>
+                                        <input class="form-check-input group-access-checkbox" type="checkbox" name="group_ids[]" value="<?php echo $groupId; ?>" id="resource_group_<?php echo $groupId; ?>" <?php echo $editingResource && isset($selectedGroupIds[$groupId]) ? 'checked' : ''; ?>>
                                         <label class="form-check-label" for="resource_group_<?php echo $groupId; ?>">
                                             <?php echo htmlspecialchars($group['name'], ENT_QUOTES, 'UTF-8'); ?> (<?php echo htmlspecialchars($group['level'] ?? '-', ENT_QUOTES, 'UTF-8'); ?>)
                                         </label>
@@ -325,6 +329,30 @@ if ($editingResourceId > 0) {
             </div>
         </div>
     </div>
+    <script>
+        document.querySelectorAll('.select-all-groups').forEach(function (selectAll) {
+            var form = selectAll.closest('form');
+            var groupCheckboxes = form.querySelectorAll('.group-access-checkbox');
+
+            selectAll.checked = groupCheckboxes.length > 0 && Array.from(groupCheckboxes).every(function (checkbox) {
+                return checkbox.checked;
+            });
+
+            selectAll.addEventListener('change', function () {
+                groupCheckboxes.forEach(function (checkbox) {
+                    checkbox.checked = selectAll.checked;
+                });
+            });
+
+            groupCheckboxes.forEach(function (checkbox) {
+                checkbox.addEventListener('change', function () {
+                    selectAll.checked = Array.from(groupCheckboxes).every(function (groupCheckbox) {
+                        return groupCheckbox.checked;
+                    });
+                });
+            });
+        });
+    </script>
     <?php include __DIR__ . '/../includes/public_footer.php'; ?>
 </body>
 </html>
