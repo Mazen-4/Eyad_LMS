@@ -1,13 +1,13 @@
 
 <div align="center">
 	<img src="Images/eyad_logo1.jpeg" alt="Eng. Eyad Mazhar logo" width="112" height="112" />
-
-	# Eyad LMS
-
-	**A focused learning platform for American Mathematics students**
-
-	Public website, protected student portal, and practical admin workspace for Eng. Eyad Mazhar.
 </div>
+
+# Eyad LMS
+
+**A focused learning platform for American Mathematics students**
+
+Public website, protected student portal, and practical admin workspace for Eng. Eyad Mazhar.
 
 <p align="center">
 	<img src="https://img.shields.io/badge/PHP-8%2B-777BB4?logo=php&logoColor=white" alt="PHP 8+" />
