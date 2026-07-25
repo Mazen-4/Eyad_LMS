@@ -7,14 +7,14 @@
 	**A focused learning platform for American Mathematics students**
 
 	Public website, protected student portal, and practical admin workspace for Eng. Eyad Mazhar.
-
-	<p>
-		<img src="https://img.shields.io/badge/PHP-8%2B-777BB4?logo=php&logoColor=white" alt="PHP 8+" />
-		<img src="https://img.shields.io/badge/Bootstrap-5.3.3-7952B3?logo=bootstrap&logoColor=white" alt="Bootstrap 5.3.3" />
-		<img src="https://img.shields.io/badge/MySQL%20%2F%20MariaDB-Database-4479A1?logo=mysql&logoColor=white" alt="MySQL or MariaDB" />
-		<img src="https://img.shields.io/badge/Responsive-Desktop%20%7C%20Tablet%20%7C%20Mobile-198754" alt="Responsive interface" />
-	</p>
 </div>
+
+<p align="center">
+	<img src="https://img.shields.io/badge/PHP-8%2B-777BB4?logo=php&logoColor=white" alt="PHP 8+" />
+	<img src="https://img.shields.io/badge/Bootstrap-5.3.3-7952B3?logo=bootstrap&logoColor=white" alt="Bootstrap 5.3.3" />
+	<img src="https://img.shields.io/badge/MySQL%20%2F%20MariaDB-Database-4479A1?logo=mysql&logoColor=white" alt="MySQL or MariaDB" />
+	<img src="https://img.shields.io/badge/Responsive-Desktop%20%7C%20Tablet%20%7C%20Mobile-198754" alt="Responsive interface" />
+</p>
 
 Eyad LMS is a lightweight learning management system and public website for **Eng. Eyad Mazhar**, an American Mathematics instructor in Egypt. It combines a public information site with protected admin and student portals for managing and consuming sessions, PDF resources, and multiple-choice quizzes.
 
