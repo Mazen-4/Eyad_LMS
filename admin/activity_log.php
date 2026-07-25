@@ -4,6 +4,11 @@ require_once __DIR__ . '/../includes/auth.php';
 $user = requireLogin(['admin']);
 $conn = getDbConnection();
 
+$deleteType = isset($_GET['delete_type']) ? $_GET['delete_type'] : '';
+$deleteId = isset($_GET['delete_id']) ? (int)$_GET['delete_id'] : 0;
+$deleteSuccess = '';
+$deleteError = '';
+
 $conn->query("CREATE TABLE IF NOT EXISTS lecture_views (
     id INT AUTO_INCREMENT PRIMARY KEY,
     student_id INT NOT NULL,
@@ -13,8 +18,28 @@ $conn->query("CREATE TABLE IF NOT EXISTS lecture_views (
     KEY lecture_id (lecture_id)
 )");
 
+if ($deleteType === 'lecture' && $deleteId > 0) {
+    $deleteStmt = $conn->prepare('DELETE FROM lecture_views WHERE id = ?');
+    $deleteStmt->bind_param('i', $deleteId);
+    $deleteStmt->execute();
+    $deleteSuccess = 'Lecture view entry deleted successfully.';
+} elseif ($deleteType === 'quiz' && $deleteId > 0) {
+    $deleteAnswersStmt = $conn->prepare('DELETE FROM quiz_attempt_answers WHERE attempt_id = ?');
+    $deleteAnswersStmt->bind_param('i', $deleteId);
+    $deleteAnswersStmt->execute();
+
+    $deleteStmt = $conn->prepare('DELETE FROM quiz_attempts WHERE id = ?');
+    $deleteStmt->bind_param('i', $deleteId);
+    $deleteStmt->execute();
+    $deleteSuccess = 'Quiz attempt entry deleted successfully.';
+} elseif ($deleteType !== '' && $deleteId > 0) {
+    $deleteError = 'Invalid activity record type.';
+}
+
 $activityQuery = "
 SELECT
+    'lecture' AS source_type,
+    lv.id AS source_id,
     'Lecture Watched' AS action_type,
     u.name AS student_name,
     u.username AS student_username,
@@ -26,6 +51,8 @@ INNER JOIN users u ON u.id = lv.student_id
 INNER JOIN lectures l ON l.id = lv.lecture_id
 UNION ALL
 SELECT
+    'quiz' AS source_type,
+    qa.id AS source_id,
     'Quiz Taken' AS action_type,
     u.name AS student_name,
     u.username AS student_username,
@@ -69,6 +96,16 @@ $quizCount = $quizCountRow ? (int)$quizCountRow['total'] : 0;
             </div>
         </div>
 
+        <?php if (!empty($deleteSuccess)): ?>
+            <div class="alert alert-success" role="alert">
+                <?php echo htmlspecialchars($deleteSuccess, ENT_QUOTES, 'UTF-8'); ?>
+            </div>
+        <?php elseif (!empty($deleteError)): ?>
+            <div class="alert alert-danger" role="alert">
+                <?php echo htmlspecialchars($deleteError, ENT_QUOTES, 'UTF-8'); ?>
+            </div>
+        <?php endif; ?>
+
         <div class="row g-3 mb-4">
             <div class="col-md-6">
                 <div class="card shadow-sm">
@@ -101,6 +138,7 @@ $quizCount = $quizCountRow ? (int)$quizCountRow['total'] : 0;
                                     <th scope="col">Action</th>
                                     <th scope="col">Item</th>
                                     <th scope="col">Details</th>
+                                    <th scope="col">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -111,6 +149,9 @@ $quizCount = $quizCountRow ? (int)$quizCountRow['total'] : 0;
                                         <td><?php echo htmlspecialchars($row['action_type'], ENT_QUOTES, 'UTF-8'); ?></td>
                                         <td><?php echo htmlspecialchars($row['item_title'], ENT_QUOTES, 'UTF-8'); ?></td>
                                         <td><?php echo htmlspecialchars($row['details'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                        <td class="text-nowrap">
+                                            <a href="activity_log.php?delete_type=<?php echo rawurlencode((string)($row['source_type'] ?? '')); ?>&delete_id=<?php echo (int)($row['source_id'] ?? 0); ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this activity record?');">Delete</a>
+                                        </td>
                                     </tr>
                                 <?php endwhile; ?>
                             </tbody>

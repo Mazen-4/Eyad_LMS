@@ -274,7 +274,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         if (!is_dir($uploadDir)) {
                             mkdir($uploadDir, 0755, true);
                         }
-                        $fileName = time() . '_' . $index . '_' . bin2hex(random_bytes(6)) . '.' . $extension;
+
+                        $baseName = pathinfo($originalName, PATHINFO_FILENAME);
+                        $normalizedBaseName = preg_replace('/[^A-Za-z0-9._-]+/', '-', $baseName);
+                        $normalizedBaseName = trim($normalizedBaseName, '-_.');
+                        if ($normalizedBaseName === '') {
+                            $normalizedBaseName = 'quiz-image';
+                        }
+
+                        $fileName = time() . '_' . $index . '_' . $normalizedBaseName . '_' . bin2hex(random_bytes(6)) . '.' . $extension;
+                        $fileName = str_replace(' ', '-', $fileName);
+                        $fileName = preg_replace('/-+/', '-', $fileName);
                         $targetPath = $uploadDir . $fileName;
                         if (move_uploaded_file($tmpName, $targetPath)) {
                             $imagePath = 'uploads/quizzes/' . $fileName;

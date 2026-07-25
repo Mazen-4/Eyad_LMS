@@ -99,13 +99,27 @@ function appBasePath(): string {
 function appAssetUrl(string $relativePath): string {
     $basePath = appBasePath();
     $basePath = rtrim($basePath, '/');
-    $relativePath = ltrim($relativePath, '/');
+    $relativePath = trim($relativePath);
 
-    if ($basePath === '' || $basePath === '/') {
-        return '/' . $relativePath;
+    if ($relativePath === '') {
+        return '';
     }
 
-    return $basePath . '/' . $relativePath;
+    if (preg_match('#^(https?:)?//|^data:#i', $relativePath) === 1) {
+        return $relativePath;
+    }
+
+    $normalizedRelativePath = ltrim($relativePath, '/');
+    $segments = array_filter(explode('/', $normalizedRelativePath), static function ($segment) {
+        return $segment !== '';
+    });
+    $encodedRelativePath = implode('/', array_map('rawurlencode', $segments));
+
+    if ($basePath === '' || $basePath === '/') {
+        return '/' . $encodedRelativePath;
+    }
+
+    return $basePath . '/' . $encodedRelativePath;
 }
 
 function appVersionedAssetUrl(string $relativePath): string {
@@ -115,6 +129,15 @@ function appVersionedAssetUrl(string $relativePath): string {
     return appAssetUrl($relativePath) . '?v=' . $version;
 }
 
+function isAccountActive($user) {
+    if (empty($user)) {
+        return false;
+    }
+
+    $status = $user['status'] ?? 'active';
+    return $status === '' || $status === 'active';
+}
+
 function requireLogin($allowedRoles = []) {
     if (!isLoggedIn()) {
         header('Location: ../public/login.php');
@@ -122,6 +145,12 @@ function requireLogin($allowedRoles = []) {
     }
 
     $user = currentUser();
+
+    if (!isAccountActive($user)) {
+        logoutUser();
+        header('Location: ../public/login.php?error=inactive');
+        exit;
+    }
 
     if (!empty($allowedRoles) && !in_array($user['role'], $allowedRoles, true)) {
         header('Location: ../public/login.php');
@@ -157,6 +186,11 @@ function authenticateUser($username, $password) {
     $user = $result->fetch_assoc();
 
     if ($user && password_verify($password, $user['password'])) {
+        if (!isAccountActive($user)) {
+            header('Location: ../public/login.php?error=inactive');
+            exit;
+        }
+
         return $user;
     }
 
@@ -181,6 +215,7 @@ function setLoggedInUser($user) {
         'name' => $user['name'] ?? '',
         'username' => $user['username'] ?? '',
         'role' => $user['role'] ?? '',
+        'status' => $user['status'] ?? 'active',
         'group_id' => !empty($groupIds) ? (int)$groupIds[0] : null,
         'group_ids' => $groupIds,
     ];
@@ -196,12 +231,15 @@ function formatDisplayDateTime($value) {
         return '-';
     }
 
-    $timestamp = strtotime($value);
-    if ($timestamp === false) {
+    try {
+        $dateTime = new DateTime($value);
+    } catch (Exception $e) {
         return '-';
     }
 
-    return date('d/m/Y h:i A', $timestamp);
+    $dateTime->setTimezone(new DateTimeZone('Africa/Nairobi'));
+
+    return $dateTime->format('d/m/Y h:i A');
 }
 
 function redirectToRoleDashboard($user) {

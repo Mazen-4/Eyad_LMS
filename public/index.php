@@ -22,12 +22,17 @@ $baseUrl = rtrim($publicDir, '/') . '/';
     <meta name="description" content="Eyad Mazhar provides structured online math preparation for American-system students, with lectures, resources, and quizzes for EST, DSAT, and ACT success.">
     <meta name="robots" content="index,follow">
     <meta name="keywords" content="Eyad Mazhar, Eng. Eyad Mazhar, math tutor, EST prep, DSAT prep, ACT prep, American-system math, online math lessons">
+    <link rel="icon" href="<?php echo htmlspecialchars(appAssetUrl('Images/eyad_logo1.jpeg'), ENT_QUOTES, 'UTF-8'); ?>" type="image/jpeg">
+    <link rel="shortcut icon" href="<?php echo htmlspecialchars(appAssetUrl('Images/eyad_logo1.jpeg'), ENT_QUOTES, 'UTF-8'); ?>" type="image/jpeg">
+    <link rel="apple-touch-icon" href="<?php echo htmlspecialchars(appAssetUrl('Images/eyad_logo1.jpeg'), ENT_QUOTES, 'UTF-8'); ?>">
     <meta property="og:title" content="Eyad Mazhar - Online Math Preparation for EST, DSAT, and ACT">
     <meta property="og:description" content="Explore structured math lessons, exam resources, and quiz-based practice from Eyad Mazhar for American-system students.">
+    <meta property="og:image" content="<?php echo htmlspecialchars(appAssetUrl('Images/eyad_logo1.jpeg'), ENT_QUOTES, 'UTF-8'); ?>">
     <meta property="og:type" content="website">
     <meta property="twitter:card" content="summary">
     <meta property="twitter:title" content="Eyad Mazhar - Online Math Preparation for EST, DSAT, and ACT">
     <meta property="twitter:description" content="Explore structured math lessons, exam resources, and quiz-based practice from Eyad Mazhar for American-system students.">
+    <meta name="twitter:image" content="<?php echo htmlspecialchars(appAssetUrl('Images/eyad_logo1.jpeg'), ENT_QUOTES, 'UTF-8'); ?>">
     <title>Eyad LMS - Home</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="<?php echo htmlspecialchars(appVersionedAssetUrl('assets/css/theme.css'), ENT_QUOTES, 'UTF-8'); ?>" rel="stylesheet">

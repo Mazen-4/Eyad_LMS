@@ -12,12 +12,17 @@ $web3formsAccessKey = '1a222743-ff83-4204-8c4d-5fa84eda88ad';
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Contact Eyad Mazhar for questions, support, or general inquiries about online math preparation and exam-focused teaching resources.">
     <meta name="robots" content="index,follow">
+    <link rel="icon" href="<?php echo htmlspecialchars(appAssetUrl('Images/eyad_logo1.jpeg'), ENT_QUOTES, 'UTF-8'); ?>" type="image/jpeg">
+    <link rel="shortcut icon" href="<?php echo htmlspecialchars(appAssetUrl('Images/eyad_logo1.jpeg'), ENT_QUOTES, 'UTF-8'); ?>" type="image/jpeg">
+    <link rel="apple-touch-icon" href="<?php echo htmlspecialchars(appAssetUrl('Images/eyad_logo1.jpeg'), ENT_QUOTES, 'UTF-8'); ?>">
     <meta property="og:title" content="Contact Eyad Mazhar">
     <meta property="og:description" content="Get in touch with Eyad Mazhar for support, questions, or general inquiries about online math preparation.">
+    <meta property="og:image" content="<?php echo htmlspecialchars(appAssetUrl('Images/eyad_logo1.jpeg'), ENT_QUOTES, 'UTF-8'); ?>">
     <meta property="og:type" content="website">
     <meta property="twitter:card" content="summary">
     <meta property="twitter:title" content="Contact Eyad Mazhar">
     <meta property="twitter:description" content="Get in touch with Eyad Mazhar for support, questions, or general inquiries about online math preparation.">
+    <meta name="twitter:image" content="<?php echo htmlspecialchars(appAssetUrl('Images/eyad_logo1.jpeg'), ENT_QUOTES, 'UTF-8'); ?>">
     <title>Contact - Eyad LMS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="<?php echo htmlspecialchars(appVersionedAssetUrl('assets/css/theme.css'), ENT_QUOTES, 'UTF-8'); ?>" rel="stylesheet">

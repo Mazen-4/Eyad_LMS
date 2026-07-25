@@ -6,14 +6,19 @@ require_once __DIR__ . '/../includes/auth.php';
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Learn about Eyad Mazhar and his online math teaching platform for American-system students preparing for EST, DSAT, and ACT exams.">
-    <meta name="robots" content="index,follow">
-    <meta property="og:title" content="About Eyad Mazhar">
-    <meta property="og:description" content="Discover how Eyad Mazhar supports structured math learning, exam preparation, and student access through online lessons and resources.">
+    <meta name="description" content="Eyad Mazhar provides structured online math preparation for American-system students with lessons, resources, and quizzes.">
+    <meta name="robots" content="noindex,nofollow">
+    <link rel="icon" href="<?php echo htmlspecialchars(appAssetUrl('Images/eyad_logo1.jpeg'), ENT_QUOTES, 'UTF-8'); ?>" type="image/jpeg">
+    <link rel="shortcut icon" href="<?php echo htmlspecialchars(appAssetUrl('Images/eyad_logo1.jpeg'), ENT_QUOTES, 'UTF-8'); ?>" type="image/jpeg">
+    <link rel="apple-touch-icon" href="<?php echo htmlspecialchars(appAssetUrl('Images/eyad_logo1.jpeg'), ENT_QUOTES, 'UTF-8'); ?>">
+    <meta property="og:title" content="Eyad Mazhar - Online Math Preparation">
+    <meta property="og:description" content="Structured online math preparation with lessons, resources, and quizzes for American-system students.">
+    <meta property="og:image" content="<?php echo htmlspecialchars(appAssetUrl('Images/eyad_logo1.jpeg'), ENT_QUOTES, 'UTF-8'); ?>">
     <meta property="og:type" content="website">
     <meta property="twitter:card" content="summary">
-    <meta property="twitter:title" content="About Eyad Mazhar">
-    <meta property="twitter:description" content="Discover how Eyad Mazhar supports structured math learning, exam preparation, and student access through online lessons and resources.">
+    <meta property="twitter:title" content="Eyad Mazhar - Online Math Preparation">
+    <meta property="twitter:description" content="Structured online math preparation with lessons, resources, and quizzes for American-system students.">
+    <meta name="twitter:image" content="<?php echo htmlspecialchars(appAssetUrl('Images/eyad_logo1.jpeg'), ENT_QUOTES, 'UTF-8'); ?>">
     <title>About - Eyad LMS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="<?php echo htmlspecialchars(appVersionedAssetUrl('assets/css/theme.css'), ENT_QUOTES, 'UTF-8'); ?>" rel="stylesheet">

@@ -8,6 +8,10 @@ $user = requireLogin(['student']);
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="<?php echo htmlspecialchars(appAssetUrl('Images/eyad_logo1.jpeg?v=' . filemtime(__DIR__ . '/../Images/eyad_logo1.jpeg')), ENT_QUOTES, 'UTF-8'); ?>" type="image/jpeg">
+    <link rel="shortcut icon" href="<?php echo htmlspecialchars(appAssetUrl('Images/eyad_logo1.jpeg?v=' . filemtime(__DIR__ . '/../Images/eyad_logo1.jpeg')), ENT_QUOTES, 'UTF-8'); ?>" type="image/jpeg">
+    <link rel="apple-touch-icon" href="<?php echo htmlspecialchars(appAssetUrl('Images/eyad_logo1.jpeg?v=' . filemtime(__DIR__ . '/../Images/eyad_logo1.jpeg')), ENT_QUOTES, 'UTF-8'); ?>">
+    <link rel="icon" href="<?php echo htmlspecialchars(appAssetUrl('favicon.ico?v=' . filemtime(__DIR__ . '/../favicon.ico')), ENT_QUOTES, 'UTF-8'); ?>" type="image/x-icon">
     <title>Student Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="<?php echo htmlspecialchars(appVersionedAssetUrl('assets/css/theme.css'), ENT_QUOTES, 'UTF-8'); ?>" rel="stylesheet">

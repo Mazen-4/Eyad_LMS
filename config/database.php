@@ -32,6 +32,7 @@ if (PHP_SAPI !== 'cli' && isset($_SERVER['HTTP_HOST']) && strpos(strtolower($_SE
 }
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+date_default_timezone_set('Africa/Nairobi');
 
 function getDbConnection() {
     global $DB_HOST, $DB_USER, $DB_PASS, $DB_NAME, $DB_PORT, $DB_SOCKET;
@@ -48,6 +49,7 @@ function getDbConnection() {
             }
 
             $connection->set_charset('utf8mb4');
+            $connection->query("SET time_zone = '+03:00'");
         } catch (Throwable $e) {
             $connection = null;
             return null;

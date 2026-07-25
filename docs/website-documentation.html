@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eyad LMS | Website Documentation Guide</title>
+<style>
+  @page { size: A4; margin: 17mm 16mm 18mm; }
+  :root { --navy:#111827; --ink:#172033; --muted:#526174; --cyan:#06b6d4; --cyan-soft:#e6fafd; --line:#d9e2ec; --paper:#fff; --wash:#f5f9fc; --green:#198754; --amber:#a16207; }
+  * { box-sizing:border-box; }
+  html { font-size:10.5pt; }
+  body { margin:0; color:var(--ink); background:var(--paper); font-family: "Segoe UI", Arial, sans-serif; line-height:1.52; }
+  h1,h2,h3,h4 { color:var(--navy); line-height:1.18; margin:0 0 .45em; page-break-after:avoid; }
+  h1 { font-size:28pt; letter-spacing:-.02em; }
+  h2 { font-size:19pt; margin-top:1.25em; padding-bottom:.22em; border-bottom:2px solid var(--cyan); }
+  h3 { font-size:13.5pt; margin-top:1.1em; color:#163a50; }
+  h4 { font-size:11pt; margin-top:.85em; }
+  p { margin:.4em 0 .75em; }
+  ul,ol { margin:.3em 0 .85em 1.25em; padding:0; }
+  li { margin:.18em 0; }
+  code { font-family:Consolas, "Courier New", monospace; font-size:.9em; background:#eef3f7; border-radius:3px; padding:.08em .28em; color:#173b50; }
+  pre { background:var(--navy); color:#e8f8fb; padding:12px 14px; border-radius:8px; overflow:hidden; font:9pt/1.45 Consolas, "Courier New", monospace; page-break-inside:avoid; }
+  table { width:100%; border-collapse:collapse; margin:.65em 0 1em; page-break-inside:avoid; }
+  th { background:var(--navy); color:#fff; text-align:left; font-weight:700; }
+  th,td { padding:7px 8px; border:1px solid var(--line); vertical-align:top; }
+  tr:nth-child(even) td { background:#f8fbfd; }
+  .cover { min-height:245mm; display:flex; flex-direction:column; justify-content:center; page-break-after:always; position:relative; overflow:hidden; }
+  .cover:before { content:""; position:absolute; width:310px; height:310px; border-radius:50%; right:-125px; top:-90px; background:var(--cyan-soft); border:22px solid rgba(6,182,212,.12); }
+  .cover:after { content:""; position:absolute; width:210px; height:210px; border-radius:50%; left:-100px; bottom:-65px; background:#eef5f8; }
+  .cover-content { position:relative; z-index:1; }
+  .logo { width:100px; height:100px; object-fit:cover; border-radius:50%; border:4px solid var(--cyan); box-shadow:0 10px 24px rgba(17,24,39,.16); margin-bottom:24px; }
+  .eyebrow { color:var(--cyan); text-transform:uppercase; letter-spacing:.14em; font-weight:800; font-size:9pt; }
+  .tagline { color:#2c5062; font-size:15pt; max-width:530px; }
+  .cover-rule { height:5px; width:115px; background:var(--cyan); margin:22px 0; border-radius:4px; }
+  .cover-meta { color:var(--muted); margin-top:42px; font-size:10pt; }
+  .cover-footer { position:absolute; bottom:4mm; left:0; right:0; color:var(--muted); font-size:8.5pt; }
+  .toc { page-break-after:always; }
+  .toc-list { columns:2; column-gap:32px; list-style:none; margin-left:0; }
+  .toc-list li { break-inside:avoid; border-bottom:1px dotted var(--line); padding:5px 0; }
+  .toc-list a { color:#125d75; text-decoration:none; font-weight:600; }
+  .intro { background:var(--wash); border-left:5px solid var(--cyan); padding:12px 15px; margin:1em 0; }
+  .callout { border:1px solid var(--line); border-radius:8px; padding:11px 13px; margin:.8em 0; background:#fff; page-break-inside:avoid; }
+  .callout strong { color:#125d75; }
+  .warning { border-left:5px solid #eab308; background:#fffbea; }
+  .success { border-left:5px solid var(--green); background:#f0fdf4; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .card { background:var(--wash); border:1px solid var(--line); border-radius:8px; padding:11px 13px; page-break-inside:avoid; }
+  .card h3 { margin-top:0; color:var(--navy); }
+  .pill { display:inline-block; background:var(--cyan-soft); color:#075985; border-radius:999px; padding:3px 8px; font-size:8.5pt; font-weight:700; margin:2px 2px 2px 0; }
+  .section-break { page-break-before:always; }
+  .no-break { page-break-inside:avoid; }
+  .small { font-size:9pt; color:var(--muted); }
+  .footer-note { margin-top:18px; color:var(--muted); font-size:8.5pt; border-top:1px solid var(--line); padding-top:6px; }
+  @media print { a { color:inherit; text-decoration:none; } .screen-only { display:none; } }
+</style>
+</head>
+<body>
+<section class="cover">
+  <div class="cover-content">
+    <img class="logo" src="../Images/eyad_logo1.jpeg" alt="Eng. Eyad Mazhar logo">
+    <div class="eyebrow">Official Website Documentation</div>
+    <h1>Eyad LMS</h1>
+    <div class="cover-rule"></div>
+    <p class="tagline"><strong>A focused learning platform for American Mathematics students.</strong><br>Public website, protected student portal, and practical admin workspace for Eng. Eyad Mazhar.</p>
+    <div class="cover-meta"><strong>Documentation guide</strong><br>Current implementation reference<br>Prepared July 2026</div>
+  </div>
+  <div class="cover-footer">PHP 8+ &nbsp;|&nbsp; MySQL / MariaDB &nbsp;|&nbsp; Bootstrap 5.3.3 &nbsp;|&nbsp; Responsive web experience</div>
+</section>
+
+<section class="toc">
+  <h2>Contents</h2>
+  <ol class="toc-list">
+    <li><a href="#overview">1. Platform Overview</a></li>
+    <li><a href="#audience">2. Users and Access Model</a></li>
+    <li><a href="#public">3. Public Website Guide</a></li>
+    <li><a href="#admin-overview">4. Admin Dashboard Guide</a></li>
+    <li><a href="#students">5. Student Management</a></li>
+    <li><a href="#groups">6. Groups and Access</a></li>
+    <li><a href="#sessions">7. Sessions and Media</a></li>
+    <li><a href="#resources">8. PDF Resources</a></li>
+    <li><a href="#quizzes">9. Quizzes and Attempts</a></li>
+    <li><a href="#activity">10. Activity Log</a></li>
+    <li><a href="#student-guide">11. Student Portal Guide</a></li>
+    <li><a href="#theme">12. Theme and Interface System</a></li>
+    <li><a href="#technical">13. Technical Architecture</a></li>
+    <li><a href="#database">14. Database Reference</a></li>
+    <li><a href="#setup">15. Installation and Configuration</a></li>
+    <li><a href="#security">16. Security and Operations</a></li>
+    <li><a href="#troubleshooting">17. Troubleshooting</a></li>
+    <li><a href="#limits">18. Current Limitations</a></li>
+  </ol>
+  <div class="intro"><strong>How to use this guide.</strong> Sections 4-10 are the administrator runbook. Section 11 is the student-facing guide. Sections 12-18 are intended for developers, maintainers, and deployment owners.</div>
+</section>
+
+<section id="overview">
+  <h2>1. Platform Overview</h2>
+  <p>Eyad LMS is a lightweight learning management system and public website for <strong>Eng. Eyad Mazhar</strong>, an American Mathematics instructor in Egypt. It supports American Math, EST, DSAT, and ACT preparation through a simple workflow: the teacher creates accounts, assigns groups, publishes learning content, and students consume that content through a protected portal.</p>
+  <div class="grid">
+    <div class="card"><h3>Public website</h3><p>Introduces the instructor and programs, provides contact options, and routes users to login.</p><span class="pill">No login required</span></div>
+    <div class="card"><h3>Admin workspace</h3><p>Controls accounts, groups, sessions, PDFs, quizzes, previews, and activity.</p><span class="pill">Admin role</span></div>
+    <div class="card"><h3>Student portal</h3><p>Provides assigned sessions, resources, quizzes, review results, and password changes.</p><span class="pill">Student role</span></div>
+    <div class="card"><h3>External-first media</h3><p>Uses Google Drive, YouTube, or direct media URLs so large videos are not stored locally.</p><span class="pill">Low storage</span></div>
+  </div>
+  <h3>Core operating principle</h3>
+  <p>Students do not self-register, pay online, or request approval through the website. The teacher creates each account, sends credentials privately, and assigns one or more groups. Group membership determines which active sessions, resources, and quizzes are visible.</p>
+  <div class="callout success"><strong>Typical lifecycle:</strong> create a group, create a student, assign the student to that group, create content for the group, preview it as an admin, then give the student their credentials.</div>
+</section>
+
+<section id="audience">
+  <h2>2. Users and Access Model</h2>
+  <table><tr><th>Role</th><th>Can do</th><th>Cannot do</th></tr><tr><td><strong>Admin</strong></td><td>Manage admins, students, groups, sessions, resources, quizzes, extra attempts, and activity. Preview active student content without group membership.</td><td>There is no separate fine-grained permission matrix beyond the admin role.</td></tr><tr><td><strong>Student</strong></td><td>View assigned active sessions and PDFs, take assigned quizzes, review attempts, and change their password.</td><td>Cannot register, access admin pages, edit content, or upload files.</td></tr><tr><td><strong>Visitor</strong></td><td>View public pages and submit the public contact form.</td><td>Cannot access protected learning content.</td></tr></table>
+  <h3>Authentication behavior</h3>
+  <ul><li>Login is shared at <code>public/login.php</code> and accepts username and password.</li><li>Credentials are verified with PHP <code>password_verify()</code>.</li><li>Successful login stores the user in a PHP session and redirects by role.</li><li>Logout is handled by <code>logout.php</code>, which clears and destroys the session.</li><li>Protected pages call the shared <code>requireLogin()</code> helper with allowed roles.</li></ul>
+  <h3>Group access behavior</h3>
+  <p>A student may have a primary group in <code>users.group_id</code> plus additional memberships in <code>user_group_access</code>. The application combines both lists, removes duplicates, and uses the result for access checks. Sessions, resources, and quizzes each have their own group-access table. Content must be active and assigned to at least one matching group.</p>
+</section>
+
+<section id="public">
+  <h2>3. Public Website Guide</h2>
+  <table><tr><th>Page</th><th>Route</th><th>Purpose</th></tr><tr><td>Home</td><td><code>public/index.php</code></td><td>Primary public landing page for American Math, EST, DSAT, and ACT preparation.</td></tr><tr><td>About</td><td><code>public/about.php</code></td><td>Instructor and platform information.</td></tr><tr><td>Contact</td><td><code>public/contact.php</code></td><td>Public inquiry form submitted asynchronously through Web3Forms.</td></tr><tr><td>Login</td><td><code>public/login.php</code></td><td>Shared login for admin and student accounts; marked noindex.</td></tr><tr><td>Root redirect</td><td><code>index.php</code></td><td>Redirects visitors to the public home page.</td></tr></table>
+  <h3>Public navigation</h3>
+  <p>The shared partial <code>includes/public_nav.php</code> displays the Eyad Mazhar logo and brand. It links to Home, Contact, and either Login or the current user dashboard. The destination changes automatically when a visitor is authenticated.</p>
+  <h3>Contact form</h3>
+  <p>The home and contact pages use the Web3Forms API with asynchronous JavaScript submission. The form collects the visitor's message details and displays success or error feedback without a full page reload. Delivery depends on the external Web3Forms service.</p>
+  <h3>Search and social metadata</h3>
+  <p>Public pages include descriptions and Open Graph/Twitter metadata. Home, About, and Contact are indexable. Login uses <code>noindex,follow</code> so credentials entry is not treated as public marketing content.</p>
+</section>
+
+<section id="admin-overview" class="section-break">
+  <h2>4. Admin Dashboard Guide</h2>
+  <p>After an admin signs in, the application redirects to <code>admin/dashboard.php</code>. The shared admin navigation contains Dashboard, Students, Admins, Groups, Sessions, Resources, Quizzes, Activity Log, and Logout.</p>
+  <div class="callout"><strong>Recommended order for a new class:</strong> 1) create the group, 2) create students, 3) assign group memberships, 4) publish sessions and resources, 5) build quizzes, 6) preview the student experience, 7) send credentials.</div>
+  <h3>Dashboard cards</h3>
+  <p>The dashboard gives direct access to every management module and contains a Student View area with previews for Sessions, Quizzes, and Resources. Preview links add <code>?preview=1</code>; admin preview is intentionally allowed to bypass normal group filtering for active content.</p>
+  <h3>Admin action checklist</h3>
+  <ol><li>Confirm the database connection and create a secure initial admin.</li><li>Create meaningful groups with names and levels that students will understand.</li><li>Create student accounts with unique usernames and temporary passwords.</li><li>Assign each student to the correct primary and additional groups.</li><li>Build and order sessions, then assign access groups.</li><li>Upload resources and verify each file opens correctly.</li><li>Create quizzes with questions, answer keys, limits, and group access.</li><li>Use dashboard previews to verify the student-facing listings.</li><li>Monitor Activity Log after students start using the site.</li></ol>
+</section>
+
+<section id="students">
+  <h2>5. Student Management</h2>
+  <p>Open <code>admin/students.php</code> from the dashboard. Student records are created manually because enrollment occurs outside the site.</p>
+  <h3>Create a student</h3>
+  <ol><li>Enter the student's name.</li><li>Choose a unique username.</li><li>Enter a password. The application hashes it before storage.</li><li>Add phone and parent phone details if needed.</li><li>Select the primary group and add additional group memberships where required.</li><li>Set the account to Active, then save.</li></ol>
+  <h3>Manage an existing student</h3>
+  <ul><li><strong>Edit:</strong> update identity, username, contact details, group assignments, status, and optionally password.</li><li><strong>Transfer:</strong> change the primary group when a student moves cohorts.</li><li><strong>Deactivate:</strong> set status inactive to prevent normal account use or content access.</li><li><strong>Delete:</strong> permanently remove the student record and its additional group-access rows.</li></ul>
+  <div class="callout warning"><strong>Operational practice:</strong> use unique usernames, send credentials through a private channel, and prefer deactivation over deletion when historical activity needs to remain understandable.</div>
+</section>
+
+<section id="groups">
+  <h2>6. Groups and Access</h2>
+  <p>Open <code>admin/groups.php</code>. Groups are learning cohorts or tracks, not necessarily school grades. Each group has a name and level label.</p>
+  <h3>Good group structure</h3>
+  <p>Use names that make access decisions obvious, such as <code>Morning Batch</code>, <code>EST Intensive</code>, or <code>Advanced 1</code>. The level field can describe the academic track or difficulty.</p>
+  <h3>How access is evaluated</h3>
+  <table><tr><th>Content</th><th>Access table</th><th>Student result</th></tr><tr><td>Session</td><td><code>lecture_folder_access</code></td><td>Visible when any student group matches an allowed group and the session is active.</td></tr><tr><td>PDF resource</td><td><code>resource_group_access</code></td><td>Visible when any student group matches an allowed group and the resource is active.</td></tr><tr><td>Quiz</td><td><code>quiz_group_access</code></td><td>Visible when any student group matches an allowed group and the quiz is active.</td></tr></table>
+  <p>Deleting a group clears the matching primary student assignment. Review content access after reorganizing groups so students do not unexpectedly lose or gain material.</p>
+</section>
+
+<section id="sessions">
+  <h2>7. Sessions and Media</h2>
+  <p>The admin interface calls lectures <strong>Sessions</strong>. Open <code>admin/lectures.php</code> to create, edit, order, activate, deactivate, assign, or delete them.</p>
+  <h3>Session fields</h3>
+  <ul><li><strong>Title:</strong> the name displayed to students.</li><li><strong>Description:</strong> optional context or study direction.</li><li><strong>Media reference:</strong> a Google Drive file URL, Drive folder URL, Drive ID, YouTube URL, direct video URL, or another external URL.</li><li><strong>Display order:</strong> controls listing order.</li><li><strong>Status:</strong> Active or Inactive.</li><li><strong>Groups:</strong> one or more groups that can access the session.</li></ul>
+  <h3>Supported player sources</h3>
+  <table><tr><th>Input</th><th>Player behavior</th></tr><tr><td>Google Drive file link or ID</td><td>Normalizes to a Drive preview frame.</td></tr><tr><td>Google Drive folder link or ID</td><td>Loads the Drive folder reference.</td></tr><tr><td>YouTube watch or short link</td><td>Converts to a YouTube embed URL.</td></tr><tr><td>Direct MP4, WebM, OGG, M4V, or MOV URL</td><td>Uses the protected media/proxy path as applicable.</td></tr><tr><td>Other HTTPS URL</td><td>Retains it as an external link source when it cannot be classified.</td></tr></table>
+  <h3>View tracking and deterrents</h3>
+  <p>Opening a valid session records a row in <code>lecture_views</code>. The same student/session pair is not recorded more than once within ten minutes. The player also includes best-effort client-side deterrents for focus loss, visibility changes, screenshot and print shortcuts, context-menu actions, and window opening. These are not DRM and cannot guarantee prevention of recording or screenshots.</p>
+</section>
+
+<section id="resources">
+  <h2>8. PDF Resources</h2>
+  <p>Open <code>admin/resources.php</code> to manage downloadable study material.</p>
+  <h3>Upload requirements</h3>
+  <ul><li>Only valid PDF files are accepted.</li><li>Maximum file size is 20 MB.</li><li>Both extension and detected MIME type are checked.</li><li>Files are stored under <code>uploads/pdfs/</code> with generated filenames.</li><li>The uploads directory must be writable by the web server.</li></ul>
+  <h3>Resource workflow</h3>
+  <ol><li>Enter a title and optional description.</li><li>Choose a PDF file for a new resource. During editing, leave the file empty to keep the existing PDF.</li><li>Select one or more access groups.</li><li>Choose Active or Inactive.</li><li>Save, then verify the resource in the admin preview and student portal.</li></ol>
+  <p>Replacing or deleting a resource attempts to remove the old file from disk. Students see only active resources assigned to at least one of their groups.</p>
+</section>
+
+<section id="quizzes" class="section-break">
+  <h2>9. Quizzes and Attempts</h2>
+  <p>Open <code>admin/quizzes.php</code> to manage quiz metadata, questions, images, groups, limits, extra attempts, and attempt summaries.</p>
+  <h3>Build a quiz</h3>
+  <ol><li>Enter a quiz title.</li><li>Select one or more groups.</li><li>Set status to Active when it is ready for students.</li><li>Set a time limit in minutes, or use <code>0</code> for no limit.</li><li>Set maximum attempts, or use <code>0</code> for unlimited attempts.</li><li>Add question text and four choices for each question.</li><li>Select the correct answer.</li><li>Optionally upload a JPG, JPEG, PNG, or GIF question image up to 2 MB.</li><li>Save and preview the quiz.</li></ol>
+  <h3>Student attempt lifecycle</h3>
+  <ol><li><strong>Start:</strong> creates an <code>in_progress</code> attempt with a start time.</li><li><strong>Continue:</strong> returns the existing attempt for that quiz.</li><li><strong>Submit:</strong> compares selections with stored correct answers and records score, total, percentage, and selected answers.</li><li><strong>Expire:</strong> timed-out attempts become <code>expired</code> and receive a zero score.</li><li><strong>Review:</strong> completed and expired attempts show question-level selections and correct answers.</li></ol>
+  <h3>Attempt rules</h3>
+  <ul><li>Only one quiz may be in progress for a student at a time.</li><li>Attempt counts include submitted and expired attempts, not in-progress attempts.</li><li>The available limit is the quiz maximum plus the student's extra-attempt allowance.</li><li>A zero maximum means unlimited attempts.</li><li>Admins can grant extra attempts to one student for one quiz and save an optional reason.</li></ul>
+  <h3>Quiz review</h3>
+  <p><code>student/quiz_review.php</code> shows score, percentage, submission time, status, question text, optional image, selected answer, correct answer, and highlighted choices. Students can review only their own attempts; admins can review any non-in-progress attempt.</p>
+</section>
+
+<section id="activity">
+  <h2>10. Activity Log</h2>
+  <p>Open <code>admin/activity_log.php</code> to see recent learning activity. The page combines up to 200 records ordered by action time.</p>
+  <table><tr><th>Activity</th><th>Recorded details</th></tr><tr><td>Lecture Watched</td><td>Student name and username, session title, and view timestamp.</td></tr><tr><td>Quiz Taken</td><td>Student, quiz title, score, total questions, percentage, and submitted/expired status.</td></tr></table>
+  <p>The dashboard cards show total lecture views and total quiz attempts excluding attempts still in progress. The log is an operational aid, not a complete analytics or attendance system.</p>
+</section>
+
+<section id="student-guide" class="section-break">
+  <h2>11. Student Portal Guide</h2>
+  <p>Students use the same login page as admins. After login, they are redirected to <code>student/dashboard.php</code>. The student navigation contains Dashboard, Sessions, Resources, Quizzes, and Logout.</p>
+  <h3>Dashboard</h3>
+  <p>The dashboard provides entry cards for Sessions, Resources, and Quizzes, plus a link to the public Contact page.</p>
+  <h3>Sessions</h3>
+  <p>Open Sessions to see active content assigned to any of the student's groups. Select a session to open the responsive player. Access is checked again when the player opens, so a guessed URL does not bypass group restrictions.</p>
+  <h3>Resources</h3>
+  <p>Open Resources to view descriptions and download links for assigned active PDFs. Resources are controlled by group membership.</p>
+  <h3>Quizzes</h3>
+  <p>Open Quizzes to see available work. Start a quiz, answer the four-choice questions, submit before the timer expires when applicable, and use Review Your Quiz Results to inspect the attempt. The listing prioritizes quizzes that have not yet been attempted.</p>
+  <h3>Password change</h3>
+  <p>Students can use <code>student/change_password.php</code> to set a new password. Passwords are hashed before storage.</p>
+  <div class="callout warning"><strong>Student support note:</strong> there is no public password-reset email flow. An administrator must assist if a student loses access.</div>
+</section>
+
+<section id="theme">
+  <h2>12. Theme and Interface System</h2>
+  <p>The shared visual system lives in <code>assets/css/theme.css</code>. It is applied across public, admin, and student pages through the shared layout partials.</p>
+  <h3>Visual direction</h3>
+  <div class="grid"><div class="card"><h3>Palette</h3><p><span class="pill">Navy #111827</span><span class="pill">Cyan #06B6D4</span><span class="pill">Light #F8FAFC</span><span class="pill">Ink #0F172A</span></p><p>The navy and cyan combination gives the platform a focused academic and technical character while keeping content areas bright.</p></div><div class="card"><h3>Surface language</h3><p>White cards, soft borders, rounded corners, restrained shadows, cyan action states, and a subtle dotted page background create hierarchy without visual noise.</p></div></div>
+  <h3>Shared components</h3>
+  <ul><li><strong>Navigation:</strong> dark navy bars with the circular Eyad logo, brand name, responsive collapse, and role-appropriate links.</li><li><strong>Buttons:</strong> cyan primary actions, outlined secondary actions, rounded corners, bold labels, and lift-on-hover motion.</li><li><strong>Cards:</strong> white surfaces with soft shadows and a slight hover lift.</li><li><strong>Hero panels:</strong> dark navy areas with cyan accents and patterned backgrounds for major dashboard introductions.</li><li><strong>Tables:</strong> responsive horizontal scrolling with readable dark text.</li><li><strong>Feedback:</strong> Bootstrap alerts for success, validation, and error states.</li><li><strong>Typography:</strong> Segoe UI with a clear weight hierarchy and wrapped long text.</li></ul>
+  <h3>Responsive behavior</h3>
+  <p>Bootstrap grid classes, responsive navigation, flexible cards, wrapping controls, responsive tables, and a smaller lecture-player frame support desktop, tablet, and mobile use. The student experience is treated as a first-class mobile workflow.</p>
+</section>
+
+<section id="technical">
+  <h2>13. Technical Architecture</h2>
+  <table><tr><th>Layer</th><th>Implementation</th><th>Key locations</th></tr><tr><td>Presentation</td><td>PHP templates, HTML5, CSS3, JavaScript, Bootstrap 5.3.3</td><td><code>public/</code>, <code>admin/</code>, <code>student/</code>, <code>assets/css/</code></td></tr><tr><td>Authentication</td><td>PHP sessions, role checks, password hashing</td><td><code>includes/auth.php</code></td></tr><tr><td>Database</td><td>MySQLi, prepared statements, utf8mb4</td><td><code>config/database.php</code></td></tr><tr><td>Storage</td><td>Local PDFs and quiz images; external videos</td><td><code>uploads/pdfs/</code>, <code>uploads/quizzes/</code></td></tr><tr><td>Contact</td><td>Asynchronous external API submission</td><td><code>public/contact.php</code>, <code>public/index.php</code></td></tr></table>
+  <h3>Shared helpers</h3>
+  <ul><li><code>appBasePath()</code>, <code>appAssetUrl()</code>, and <code>appVersionedAssetUrl()</code> keep links and CSS assets working when the project is installed in a subdirectory.</li><li><code>getUserGroupIds()</code> combines primary and additional memberships.</li><li><code>requireLogin()</code> enforces session presence and allowed roles.</li><li><code>bindPreparedParams()</code> supports dynamic group filters with prepared statements.</li><li>Shared navigation and footer partials keep branding and Bootstrap loading consistent.</li></ul>
+  <h3>Protected supporting endpoints</h3>
+  <p><code>student/quiz_time_check.php</code> supports timed quiz checks. <code>student/proxy_media.php</code> supports protected direct-media handling. <code>student/widevine_license.php</code> is currently a placeholder and is not a production DRM license server.</p>
+</section>
+
+<section id="database">
+  <h2>14. Database Reference</h2>
+  <p>The <code>database/</code> directory currently contains no formal SQL dump. Several pages create or upgrade supporting tables on demand. The database itself and foundational records must still be prepared before normal use.</p>
+  <table><tr><th>Table</th><th>Purpose</th></tr><tr><td><code>users</code></td><td>Admin/student identity, login, contact details, role, status, and primary group.</td></tr><tr><td><code>groups</code></td><td>Learning group names and levels.</td></tr><tr><td><code>user_group_access</code></td><td>Additional student memberships.</td></tr><tr><td><code>lectures</code></td><td>Session title, description, external media reference, order, and status.</td></tr><tr><td><code>lecture_folder_access</code></td><td>Session-to-group mapping.</td></tr><tr><td><code>resources</code></td><td>PDF title, description, path, status, and primary group data.</td></tr><tr><td><code>resource_group_access</code></td><td>Resource-to-group mapping.</td></tr><tr><td><code>quizzes</code></td><td>Quiz title, group, status, time limit, and attempt limit.</td></tr><tr><td><code>quiz_group_access</code></td><td>Quiz-to-group mapping.</td></tr><tr><td><code>questions</code></td><td>Question text, four choices, answer key, and image path.</td></tr><tr><td><code>quiz_attempts</code></td><td>Attempt lifecycle, score, percentage, timestamps, and status.</td></tr><tr><td><code>quiz_attempt_answers</code></td><td>Selected answer and correctness for each question.</td></tr><tr><td><code>quiz_extra_attempts</code></td><td>Student-specific extra attempt allowance and reason.</td></tr><tr><td><code>lecture_views</code></td><td>Session view history for activity reporting.</td></tr></table>
+</section>
+
+<section id="setup" class="section-break">
+  <h2>15. Installation and Configuration</h2>
+  <h3>Requirements</h3>
+  <ul><li>PHP 8 or newer</li><li>Apache with PHP enabled</li><li>MySQL or MariaDB</li><li>PHP MySQLi, fileinfo, and sessions extensions</li><li>Writable <code>uploads/pdfs/</code> and <code>uploads/quizzes/</code> directories</li></ul>
+  <h3>Local WAMP setup</h3>
+  <ol><li>Place the project at <code>C:\wamp64\www\Eyad_LMS</code> or another Apache web-root folder.</li><li>Start Apache and MySQL.</li><li>Create the <code>eyad_lms</code> database, or configure another database name.</li><li>Configure credentials in <code>db_credentials.php</code> or environment variables.</li><li>Ensure upload directories are writable.</li><li>Create an active admin user with a password generated by <code>password_hash()</code>.</li><li>Open <code>http://localhost/Eyad_LMS/</code>.</li></ol>
+  <h3>Configuration variables</h3>
+  <table><tr><th>Variable</th><th>Meaning</th><th>Local default</th></tr><tr><td><code>DB_HOST</code></td><td>Database host</td><td><code>localhost</code></td></tr><tr><td><code>DB_PORT</code></td><td>Database port</td><td><code>3306</code></td></tr><tr><td><code>DB_SOCKET</code></td><td>Optional MySQL socket</td><td>Empty</td></tr><tr><td><code>DB_USER</code></td><td>Database user</td><td><code>root</code></td></tr><tr><td><code>DB_PASS</code></td><td>Database password</td><td>Empty locally</td></tr><tr><td><code>DB_NAME</code></td><td>Database name</td><td><code>eyad_lms</code></td></tr></table>
+  <p>When the request host contains <code>localhost</code>, the application applies local defaults. For hosting, use environment variables or the optional credentials file and keep secrets out of version control and public web paths.</p>
+</section>
+
+<section id="security">
+  <h2>16. Security and Operations</h2>
+  <h3>Implemented protections</h3>
+  <ul><li>Password hashing and verification.</li><li>Session-based login, role checks, and logout.</li><li>Group checks for student listings and direct content URLs.</li><li>Prepared statements for database operations.</li><li>HTML escaping for rendered values.</li><li>PDF and image extension, MIME, and size validation.</li><li>Generated randomized upload filenames.</li><li>Active/inactive checks for accounts and learning content.</li></ul>
+  <h3>Deployment checklist</h3>
+  <ul><li>Use HTTPS in production.</li><li>Keep database credentials private.</li><li>Use a strong admin password and create only required admin accounts.</li><li>Verify upload permissions and PHP upload limits.</li><li>Test each role and each group access path.</li><li>Back up the database and uploads before major content changes.</li><li>Review <code>robots.txt</code> and web-server access rules.</li></ul>
+  <div class="callout warning"><strong>Important:</strong> browser-level capture deterrents are not a security boundary. The current Widevine endpoint is a placeholder. Production DRM, CSRF protection, rate limiting, recovery workflows, and formal migrations require additional implementation.</div>
+</section>
+
+<section id="troubleshooting">
+  <h2>17. Troubleshooting</h2>
+  <table><tr><th>Symptom</th><th>Checks</th></tr><tr><td>Login fails for a known account</td><td>Confirm username, password hash, active status, database connection, and the user's role.</td></tr><tr><td>Student sees no content</td><td>Confirm the account is active, has a primary or additional group, content is active, and content has matching group-access rows.</td></tr><tr><td>PDF upload fails</td><td>Check PDF MIME type, 20 MB limit, PHP upload limits, and directory permissions.</td></tr><tr><td>Quiz will not start</td><td>Check quiz status, group assignment, attempt limit, existing in-progress attempt, and database tables.</td></tr><tr><td>Timed quiz expires unexpectedly</td><td>Check server time, stored start time, configured minutes, and the supporting time-check request.</td></tr><tr><td>Media does not display</td><td>Check the source URL format, sharing permissions, HTTPS, external provider availability, and Drive/YouTube embedding policy.</td></tr><tr><td>Assets are broken in a subdirectory</td><td>Confirm pages include <code>includes/auth.php</code> and use the shared asset URL helpers.</td></tr><tr><td>Contact form does not deliver</td><td>Check browser network errors, Web3Forms availability, access key configuration, and server connectivity.</td></tr></table>
+</section>
+
+<section id="limits">
+  <h2>18. Current Limitations</h2>
+  <ul><li>No student self-registration, online payments, email verification, or email password reset.</li><li>No gradebook, attendance, certificates, homework submission, discussions, or advanced analytics.</li><li>No randomized questions, negative marking, or complex grading rules.</li><li>No device-count enforcement or fine-grained permissions beyond admin/student roles.</li><li>No complete DRM/license service and no guaranteed recording or screenshot prevention.</li><li>No formal SQL schema dump, migration runner, or automated backup process.</li><li>External services such as Web3Forms, Google Drive, and YouTube can affect availability.</li></ul>
+  <h3>Recommended future improvements</h3>
+  <p>Prioritize a formal schema/migration process, CSRF protection, rate limiting, account recovery, automated backups, stronger media protection, progress tracking, richer analytics, and more granular permissions as the platform grows.</p>
+  <div class="intro"><strong>Documentation source:</strong> This PDF is generated from <code>docs/website-documentation.html</code>. Update that source whenever a user-facing workflow, permission, route, theme rule, or deployment requirement changes.</div>
+  <p class="footer-note">Eyad LMS documentation guide | Eng. Eyad Mazhar | Current implementation reference</p>
+</section>
+</body>
+</html>

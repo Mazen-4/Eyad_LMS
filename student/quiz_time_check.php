@@ -38,7 +38,19 @@ $attemptStmt->execute();
 $attempt = $attemptStmt->get_result()->fetch_assoc();
 
 $startedAt = $attempt['started_at'] ?? '';
-$startedAtTimestamp = $startedAt !== '' ? strtotime($startedAt) : false;
+$startedAtTimestamp = false;
+
+if ($startedAt !== '') {
+    $startedAtTimestamp = strtotime($startedAt);
+    if ($startedAtTimestamp === false) {
+        try {
+            $parsedDateTime = new DateTimeImmutable($startedAt, new DateTimeZone(date_default_timezone_get()));
+            $startedAtTimestamp = $parsedDateTime->getTimestamp();
+        } catch (Exception $e) {
+            $startedAtTimestamp = false;
+        }
+    }
+}
 
 if ($startedAtTimestamp === false) {
     echo json_encode(['remaining_seconds' => 0]);

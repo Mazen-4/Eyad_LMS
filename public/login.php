@@ -6,6 +6,9 @@ if (isLoggedIn()) {
 }
 
 $error = '';
+if (isset($_GET['error']) && $_GET['error'] === 'inactive') {
+    $error = 'Your account is inactive right now. Please contact an administrator for help.';
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username'] ?? '');
@@ -31,6 +34,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Sign in to access Eyad Mazhar’s online math lessons, study resources, and quiz content for American-system exam preparation.">
+    <link rel="icon" href="<?php echo htmlspecialchars(appAssetUrl('Images/eyad_logo1.jpeg'), ENT_QUOTES, 'UTF-8'); ?>" type="image/jpeg">
+    <link rel="shortcut icon" href="<?php echo htmlspecialchars(appAssetUrl('Images/eyad_logo1.jpeg'), ENT_QUOTES, 'UTF-8'); ?>" type="image/jpeg">
+    <link rel="apple-touch-icon" href="<?php echo htmlspecialchars(appAssetUrl('Images/eyad_logo1.jpeg'), ENT_QUOTES, 'UTF-8'); ?>">
     <meta name="robots" content="noindex,follow">
     <meta property="og:title" content="Login to Eyad Mazhar’s Online Math Portal">
     <meta property="og:description" content="Access your student portal for lessons, resources, and quizzes from Eyad Mazhar.">

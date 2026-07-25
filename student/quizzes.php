@@ -195,7 +195,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        $startedAtValue = $startedAt !== '' ? $startedAt : date('Y-m-d H:i:s');
+        $startedAtValue = date('Y-m-d H:i:s');
         $startAttemptStmt = $conn->prepare('INSERT INTO quiz_attempts (student_id, quiz_id, score, submitted_at, started_at, status) VALUES (?, ?, 0, NULL, ?, "in_progress")');
         $startAttemptStmt->bind_param('iis', $user['id'], $quizId, $startedAtValue);
         $startAttemptStmt->execute();
@@ -478,7 +478,18 @@ $activeQuizAttempt = $activeAttemptStmt->get_result()->fetch_assoc();
                                         <div class="border rounded p-3 mb-3">
                                             <p class="fw-bold mb-3"><?php echo htmlspecialchars($question['question'], ENT_QUOTES, 'UTF-8'); ?></p>
                                             <?php if (!empty($question['image_path'])): ?>
-                                                <img src="../<?php echo htmlspecialchars($question['image_path'], ENT_QUOTES, 'UTF-8'); ?>" alt="Question image" class="img-fluid rounded mb-3" style="max-height: 260px;">
+                                                <?php $questionImageUrl = appAssetUrl($question['image_path']); ?>
+                                                <div class="text-center mb-3">
+                                                    <img src="<?php echo htmlspecialchars($questionImageUrl, ENT_QUOTES, 'UTF-8'); ?>"
+                                                         alt="Question image"
+                                                         class="img-fluid rounded shadow-sm d-block mx-auto"
+                                                         loading="lazy"
+                                                         decoding="async"
+                                                         referrerpolicy="no-referrer"
+                                                         style="max-height: 260px; width: auto; max-width: 100%; object-fit: contain;"
+                                                         onerror="this.style.display='none'; this.parentElement.querySelector('.image-unavailable').classList.remove('d-none');">
+                                                    <div class="image-unavailable text-muted small d-none mt-2">The image could not be loaded on this device.</div>
+                                                </div>
                                             <?php endif; ?>
                                             <div class="row g-2">
                                                 <?php foreach (['choice_1' => 'Choice 1', 'choice_2' => 'Choice 2', 'choice_3' => 'Choice 3', 'choice_4' => 'Choice 4'] as $field => $label): ?>
@@ -602,9 +613,14 @@ $activeQuizAttempt = $activeAttemptStmt->get_result()->fetch_assoc();
                             return new Date(asNumber);
                         }
 
-                        const withT = normalizedStartedAt.replace(' ', 'T');
-                        const utcString = withT.endsWith('Z') ? withT : withT + 'Z';
-                        const parsedStartedAt = new Date(utcString);
+                        const normalizedInput = normalizedStartedAt.replace(' ', 'T');
+                        const dashMatch = normalizedInput.match(/^([0-9]{4})-([0-9]{2})-([0-9]{2})[T ]([0-9]{2}):([0-9]{2}):([0-9]{2})/);
+                        if (dashMatch) {
+                            const [, year, month, day, hours, minutes, seconds] = dashMatch;
+                            return new Date(Number(year), Number(month) - 1, Number(day), Number(hours), Number(minutes), Number(seconds));
+                        }
+
+                        const parsedStartedAt = new Date(normalizedInput);
                         return Number.isNaN(parsedStartedAt.getTime()) ? null : parsedStartedAt;
                     }
 
@@ -723,15 +739,12 @@ $activeQuizAttempt = $activeAttemptStmt->get_result()->fetch_assoc();
                         return;
                     }
 
-                    const now = new Date();
-                    const startedAtValue = now.toISOString().slice(0, 19).replace('T', ' ');
-                    startedAtInput.value = startedAtValue;
+                    startedAtInput.value = '';
                     startButton.disabled = true;
 
                     const formData = new FormData();
                     formData.append('action', 'start_attempt');
                     formData.append('quiz_id', startButton.getAttribute('data-quiz-id') || '');
-                    formData.append('started_at', startedAtValue);
 
                     fetch(window.location.href, {
                         method: 'POST',

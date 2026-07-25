@@ -105,7 +105,18 @@ $questions = $questionStmt->get_result();
                         </div>
                         <p class="mb-3 fw-semibold"><?php echo htmlspecialchars($question['question'], ENT_QUOTES, 'UTF-8'); ?></p>
                         <?php if (!empty($question['image_path'])): ?>
-                            <img src="../<?php echo htmlspecialchars($question['image_path'], ENT_QUOTES, 'UTF-8'); ?>" alt="Question image" class="img-fluid rounded mb-3" style="max-height: 320px;">
+                            <?php $questionImageUrl = appAssetUrl($question['image_path']); ?>
+                            <div class="text-center mb-3">
+                                <img src="<?php echo htmlspecialchars($questionImageUrl, ENT_QUOTES, 'UTF-8'); ?>"
+                                     alt="Question image"
+                                     class="img-fluid rounded shadow-sm d-block mx-auto"
+                                     loading="lazy"
+                                     decoding="async"
+                                     referrerpolicy="no-referrer"
+                                     style="max-height: 320px; width: auto; max-width: 100%; object-fit: contain;"
+                                     onerror="this.style.display='none'; this.parentElement.querySelector('.image-unavailable').classList.remove('d-none');">
+                                <div class="image-unavailable text-muted small d-none mt-2">The image could not be loaded on this device.</div>
+                            </div>
                         <?php endif; ?>
                         <div class="mb-3">
                             <p class="mb-1"><strong>Your answer:</strong> <?php echo $selectedLabel !== '' ? htmlspecialchars($selectedLabel, ENT_QUOTES, 'UTF-8') : '<span class="text-muted">No answer selected</span>'; ?></p>
