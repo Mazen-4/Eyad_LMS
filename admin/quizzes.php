@@ -98,6 +98,30 @@ if ($quizExtraAttemptsTableResult && $quizExtraAttemptsTableResult->num_rows ===
         KEY quiz_id (quiz_id),
         KEY student_id (student_id)
     )");
+} else {
+    $extraAttemptsColumnsResult = $conn->query('SHOW COLUMNS FROM quiz_extra_attempts');
+    if ($extraAttemptsColumnsResult) {
+        $extraAttemptsColumns = [];
+        while ($extraAttemptsColumn = $extraAttemptsColumnsResult->fetch_assoc()) {
+            $extraAttemptsColumns[] = $extraAttemptsColumn['Field'];
+        }
+
+        if (!in_array('quiz_id', $extraAttemptsColumns, true)) {
+            $conn->query('ALTER TABLE quiz_extra_attempts ADD COLUMN quiz_id INT NOT NULL DEFAULT 0');
+        }
+        if (!in_array('student_id', $extraAttemptsColumns, true)) {
+            $conn->query('ALTER TABLE quiz_extra_attempts ADD COLUMN student_id INT NOT NULL DEFAULT 0');
+        }
+        if (!in_array('extra_attempts', $extraAttemptsColumns, true)) {
+            $conn->query('ALTER TABLE quiz_extra_attempts ADD COLUMN extra_attempts INT NOT NULL DEFAULT 1');
+        }
+        if (!in_array('reason', $extraAttemptsColumns, true)) {
+            $conn->query('ALTER TABLE quiz_extra_attempts ADD COLUMN reason VARCHAR(255) DEFAULT NULL');
+        }
+        if (!in_array('created_at', $extraAttemptsColumns, true)) {
+            $conn->query('ALTER TABLE quiz_extra_attempts ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+        }
+    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -139,48 +163,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Quiz title and at least one group are required.';
     } else {
         $primaryGroupId = (int)$selectedGroups[0];
+        $imagesToDelete = [];
+        $newlyUploadedImagePaths = [];
+        $conn->begin_transaction();
 
         if ($action === 'edit' && $quizId > 0) {
             $stmt = $conn->prepare('UPDATE quizzes SET title = ?, group_id = ?, status = ?, time_limit_minutes = ?, max_attempts = ? WHERE id = ?');
             $stmt->bind_param('sisiii', $title, $primaryGroupId, $status, $timeLimitMinutes, $maxAttempts, $quizId);
-            $stmt->execute();
+            if (!$stmt->execute()) {
+                $error = 'Failed to update quiz metadata.';
+            }
 
-            $clearAccessStmt = $conn->prepare('DELETE FROM quiz_group_access WHERE quiz_id = ?');
-            $clearAccessStmt->bind_param('i', $quizId);
-            $clearAccessStmt->execute();
-
-            $existingQuestionsStmt = $conn->prepare('SELECT image_path FROM questions WHERE quiz_id = ?');
-            $existingQuestionsStmt->bind_param('i', $quizId);
-            $existingQuestionsStmt->execute();
-            $existingQuestions = $existingQuestionsStmt->get_result();
-            while ($existingQuestion = $existingQuestions->fetch_assoc()) {
-                if (!empty($existingQuestion['image_path'])) {
-                    $existingFilePath = __DIR__ . '/../' . $existingQuestion['image_path'];
-                    if (is_file($existingFilePath)) {
-                        unlink($existingFilePath);
-                    }
+            if ($error === '') {
+                $clearAccessStmt = $conn->prepare('DELETE FROM quiz_group_access WHERE quiz_id = ?');
+                $clearAccessStmt->bind_param('i', $quizId);
+                if (!$clearAccessStmt->execute()) {
+                    $error = 'Failed to update quiz access rights.';
                 }
             }
 
-            $deleteQuestionsStmt = $conn->prepare('DELETE FROM questions WHERE quiz_id = ?');
-            $deleteQuestionsStmt->bind_param('i', $quizId);
-            $deleteQuestionsStmt->execute();
-
-            $success = 'Quiz updated successfully.';
+            // Keep existing question image files until the updated questions are successfully processed.
+            if ($error === '') {
+                $success = 'Quiz updated successfully.';
+            }
         } else {
             $stmt = $conn->prepare('INSERT INTO quizzes (title, group_id, status, time_limit_minutes, max_attempts) VALUES (?, ?, ?, ?, ?)');
             $stmt->bind_param('sisii', $title, $primaryGroupId, $status, $timeLimitMinutes, $maxAttempts);
-            $stmt->execute();
-            $quizId = $stmt->insert_id;
-            $success = 'Quiz created successfully.';
+            if (!$stmt->execute()) {
+                $error = 'Failed to create quiz.';
+            } else {
+                $quizId = $stmt->insert_id;
+                $success = 'Quiz created successfully.';
+            }
         }
 
         $accessStmt = $conn->prepare('INSERT INTO quiz_group_access (quiz_id, group_id) VALUES (?, ?)');
         foreach ($selectedGroups as $groupId) {
+            if ($error !== '') {
+                break;
+            }
             $gid = (int)$groupId;
             if ($gid > 0) {
                 $accessStmt->bind_param('ii', $quizId, $gid);
-                $accessStmt->execute();
+                if (!$accessStmt->execute()) {
+                    $error = 'Failed to update quiz access rights.';
+                    break;
+                }
             }
         }
 
@@ -194,18 +222,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $removeQuestions = array_map('intval', (array)($_POST['remove_question'] ?? []));
         $removeImages = array_map('intval', (array)($_POST['remove_image'] ?? []));
         $oldQuestionImagePaths = [];
+        $existingQuestionImagePathsByIndex = [];
 
         if ($action === 'edit' && $quizId > 0) {
-            $existingQuestionsStmt = $conn->prepare('SELECT image_path FROM questions WHERE quiz_id = ?');
+            $existingQuestionsStmt = $conn->prepare('SELECT image_path FROM questions WHERE quiz_id = ? ORDER BY id');
             $existingQuestionsStmt->bind_param('i', $quizId);
             $existingQuestionsStmt->execute();
             $existingQuestionsResult = $existingQuestionsStmt->get_result();
             while ($existingQuestion = $existingQuestionsResult->fetch_assoc()) {
                 $oldImagePath = trim($existingQuestion['image_path'] ?? '');
+                $existingQuestionImagePathsByIndex[] = $oldImagePath;
                 if ($oldImagePath !== '') {
                     $oldQuestionImagePaths[] = $oldImagePath;
                 }
             }
+
+            $deleteQuestionsStmt = $conn->prepare('DELETE FROM questions WHERE quiz_id = ?');
+            $deleteQuestionsStmt->bind_param('i', $quizId);
+            $deleteQuestionsStmt->execute();
         }
 
         $questionStmt = $conn->prepare('INSERT INTO questions (quiz_id, question, image_path, choice_1, choice_2, choice_3, choice_4, correct_answer) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
@@ -227,15 +261,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $choice3 = trim($choices3[$index] ?? '');
             $choice4 = trim($choices4[$index] ?? '');
             $correctAnswer = trim($correctAnswers[$index] ?? '1');
-            $imagePath = trim($existingImages[$index] ?? '');
+            $submittedExistingImagePath = trim($existingImages[$index] ?? '');
+            $defaultImagePath = $existingQuestionImagePathsByIndex[$index] ?? '';
+            $imagePath = $submittedExistingImagePath !== '' ? $submittedExistingImagePath : $defaultImagePath;
             $shouldRemoveImage = (int)($removeImages[$index] ?? 0) === 1;
 
             if ($shouldRemoveImage) {
                 if ($imagePath !== '') {
-                    $oldImageFilePath = __DIR__ . '/../' . $imagePath;
-                    if (is_file($oldImageFilePath)) {
-                        unlink($oldImageFilePath);
-                    }
+                    $imagesToDelete[] = $imagePath;
                 }
                 $imagePath = '';
             }
@@ -246,6 +279,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $originalName = basename($imageFile['name'][$index] ?? '');
                 $imageSize = (int)($imageFile['size'][$index] ?? 0);
                 $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+                $oldImagePath = $imagePath;
 
                 if ($tmpName !== '' && ($imageFile['error'][$index] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
                     if (!in_array($extension, ['jpg', 'jpeg', 'png', 'gif'], true)) {
@@ -263,13 +297,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
 
                     if ($error === '') {
-                        if ($imagePath !== '') {
-                            $oldImageFilePath = __DIR__ . '/../' . $imagePath;
-                            if (is_file($oldImageFilePath)) {
-                                unlink($oldImageFilePath);
-                            }
-                        }
-
                         $uploadDir = __DIR__ . '/../uploads/quizzes/';
                         if (!is_dir($uploadDir)) {
                             mkdir($uploadDir, 0755, true);
@@ -287,7 +314,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $fileName = preg_replace('/-+/', '-', $fileName);
                         $targetPath = $uploadDir . $fileName;
                         if (move_uploaded_file($tmpName, $targetPath)) {
+                            if ($oldImagePath !== '') {
+                                $imagesToDelete[] = $oldImagePath;
+                            }
                             $imagePath = 'uploads/quizzes/' . $fileName;
+                            $newlyUploadedImagePaths[] = $imagePath;
                         } else {
                             $error = 'Failed to upload quiz image.';
                         }
@@ -296,21 +327,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $questionStmt->bind_param('isssssss', $quizId, $questionText, $imagePath, $choice1, $choice2, $choice3, $choice4, $correctAnswer);
-            $questionStmt->execute();
+            if (!$questionStmt->execute()) {
+                $error = 'Failed to save quiz questions.';
+                break;
+            }
 
             if ($imagePath !== '') {
                 $retainedImagePaths[] = $imagePath;
             }
+
+            if ($error !== '') {
+                break;
+            }
         }
 
-        foreach ($oldQuestionImagePaths as $oldImagePath) {
-            if ($oldImagePath === '' || in_array($oldImagePath, $retainedImagePaths, true)) {
-                continue;
+        if ($error === '') {
+            foreach ($oldQuestionImagePaths as $oldImagePath) {
+                if ($oldImagePath === '' || in_array($oldImagePath, $retainedImagePaths, true)) {
+                    continue;
+                }
+
+                $imagesToDelete[] = $oldImagePath;
             }
 
-            $oldImageFilePath = __DIR__ . '/../' . $oldImagePath;
-            if (is_file($oldImageFilePath)) {
-                unlink($oldImageFilePath);
+            $conn->commit();
+            $imagesToDelete = array_unique($imagesToDelete);
+            foreach ($imagesToDelete as $oldImagePath) {
+                $oldImageFilePath = __DIR__ . '/../' . $oldImagePath;
+                if (is_file($oldImageFilePath)) {
+                    unlink($oldImageFilePath);
+                }
+            }
+        } else {
+            $conn->rollback();
+            foreach ($newlyUploadedImagePaths as $uploadedPath) {
+                $uploadedFilePath = __DIR__ . '/../' . $uploadedPath;
+                if (is_file($uploadedFilePath)) {
+                    unlink($uploadedFilePath);
+                }
             }
         }
     }
@@ -364,7 +418,17 @@ $quizOptions = [];
 while ($quizOption = $quizSelectResult->fetch_assoc()) {
     $quizOptions[] = $quizOption;
 }
-$extraAttemptsResult = $conn->query('SELECT qea.id, q.title AS quiz_title, u.name AS student_name, u.username, qea.extra_attempts, qea.reason, qea.created_at FROM quiz_extra_attempts qea INNER JOIN quizzes q ON q.id = qea.quiz_id INNER JOIN users u ON u.id = qea.student_id ORDER BY qea.created_at DESC');
+$usersUsernameColumnResult = $conn->query("SHOW COLUMNS FROM users LIKE 'username'");
+$usersHasUsername = $usersUsernameColumnResult && $usersUsernameColumnResult->num_rows > 0;
+
+$extraAttemptsQuery = 'SELECT qea.id, qea.quiz_id, qea.student_id, qea.extra_attempts, qea.reason, qea.created_at, q.title AS quiz_title, u.name AS student_name' . ($usersHasUsername ? ', u.username AS username' : ', "" AS username') . ' FROM quiz_extra_attempts qea LEFT JOIN quizzes q ON q.id = qea.quiz_id LEFT JOIN users u ON u.id = qea.student_id ORDER BY qea.created_at DESC, qea.id DESC';
+$extraAttemptsResult = $conn->query($extraAttemptsQuery);
+$extraAttemptsRows = [];
+if ($extraAttemptsResult) {
+    while ($extraAttemptRow = $extraAttemptsResult->fetch_assoc()) {
+        $extraAttemptsRows[] = $extraAttemptRow;
+    }
+}
 $attemptsSummaryResult = $conn->query('SELECT qa.id, qa.student_id, u.name AS student_name, u.username, q.title AS quiz_title, qa.score, qa.total_questions, qa.score_percent, qa.status, qa.submitted_at FROM quiz_attempts qa INNER JOIN users u ON u.id = qa.student_id INNER JOIN quizzes q ON q.id = qa.quiz_id ORDER BY qa.submitted_at DESC, qa.id DESC LIMIT 100');
 
 $editingQuiz = null;
@@ -463,38 +527,6 @@ if ($editingQuizId > 0) {
             </div>
         </div>
 
-        <?php if ($extraAttemptsResult && $extraAttemptsResult->num_rows > 0): ?>
-            <div class="card mb-4">
-                <div class="card-body">
-                    <h5 class="card-title">Current Extra Attempt Rules</h5>
-                    <div class="table-responsive">
-                        <table class="table table-sm align-middle">
-                            <thead>
-                                <tr>
-                                    <th>Quiz</th>
-                                    <th>Student</th>
-                                    <th>Extra Attempts</th>
-                                    <th>Reason</th>
-                                    <th>Created</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php while ($extraAttempt = $extraAttemptsResult->fetch_assoc()): ?>
-                                    <tr>
-                                        <td><?php echo htmlspecialchars($extraAttempt['quiz_title'], ENT_QUOTES, 'UTF-8'); ?></td>
-                                        <td><?php echo htmlspecialchars($extraAttempt['student_name'] . ' (' . $extraAttempt['username'] . ')', ENT_QUOTES, 'UTF-8'); ?></td>
-                                        <td><?php echo (int)$extraAttempt['extra_attempts']; ?></td>
-                                        <td><?php echo htmlspecialchars($extraAttempt['reason'] ?? '-', ENT_QUOTES, 'UTF-8'); ?></td>
-                                        <td><?php echo htmlspecialchars(formatDisplayDateTime($extraAttempt['created_at']), ENT_QUOTES, 'UTF-8'); ?></td>
-                                    </tr>
-                                <?php endwhile; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        <?php endif; ?>
-
         <div class="card mb-4">
             <div class="card-body">
                 <h5 class="card-title"><?php echo $editingQuiz ? 'Edit Quiz' : 'Add Quiz'; ?></h5>
@@ -561,8 +593,22 @@ if ($editingQuizId > 0) {
                                     ]]; ?>
                                 <?php endif; ?>
                                 <?php foreach ($questionBlocks as $index => $question): ?>
+                                    <?php
+                                        $questionImagePath = trim($question['image_path'] ?? '');
+                                        $questionImageFullPath = $questionImagePath !== '' ? __DIR__ . '/../' . $questionImagePath : '';
+                                        if ($questionImageFullPath !== '') {
+                                            clearstatcache(true, $questionImageFullPath);
+                                        }
+                                        $questionImageExists = $questionImagePath !== '' && is_file($questionImageFullPath);
+                                        $questionImageUrl = '';
+                                        if ($questionImagePath !== '') {
+                                            $questionImageAssetUrl = appAssetUrl($questionImagePath);
+                                            $questionImageVersion = $questionImageFullPath !== '' && is_file($questionImageFullPath) ? filemtime($questionImageFullPath) : time();
+                                            $questionImageUrl = $questionImageAssetUrl . (strpos($questionImageAssetUrl, '?') === false ? '?' : '&') . 'v=' . $questionImageVersion;
+                                        }
+                                    ?>
                                     <div class="question-block border rounded p-3 mb-3">
-                                        <input type="hidden" name="existing_image[]" value="<?php echo htmlspecialchars($question['image_path'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                                        <input type="hidden" name="existing_image[]" value="<?php echo htmlspecialchars($questionImagePath, ENT_QUOTES, 'UTF-8'); ?>">
                                         <input type="hidden" name="remove_question[]" value="0">
                                         <input type="hidden" name="remove_image[]" value="0">
                                         <div class="d-flex justify-content-between align-items-center mb-2">
@@ -579,8 +625,8 @@ if ($editingQuizId > 0) {
                                             <label class="form-label">Question Image (optional)</label>
                                             <input type="file" name="question_image[]" class="form-control" accept="image/*">
                                             <div class="form-text">Supported formats: JPG, PNG, GIF. Maximum file size: 2MB.</div>
-                                            <?php if (!empty($question['image_path'])): ?>
-                                                <div class="form-text current-image-info">Current image: <a href="../<?php echo htmlspecialchars($question['image_path'], ENT_QUOTES, 'UTF-8'); ?>" target="_blank">View</a></div>
+                                            <?php if ($questionImageExists): ?>
+                                                <div class="form-text current-image-info">Current image: <a href="<?php echo htmlspecialchars($questionImageUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank">View</a></div>
                                             <?php endif; ?>
                                             <div class="form-text text-danger image-remove-status d-none">Picture will be removed.</div>
                                         </div>

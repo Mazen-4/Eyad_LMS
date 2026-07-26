@@ -1,0 +1,16 @@
+from pathlib import Path
+path = Path('admin/quizzes.php')
+text = path.read_text(encoding='utf-8', errors='replace')
+lines = text.splitlines()
+for i in range(430, 531):
+    print(f'{i:04d}: {lines[i-1]}')
+print('\nTABLE COUNTS:')
+print('table', text.count('<table'))
+print('thead', text.count('<thead'))
+print('tbody', text.count('<tbody'))
+print('tr', text.count('<tr'))
+print('th', text.count('<th'))
+print('td', text.count('<td'))
+print('closing table', text.count('</table>'))
+print('closing tbody', text.count('</tbody>'))
+print('closing tr', text.count('</tr>'))

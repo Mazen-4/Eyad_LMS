@@ -104,7 +104,7 @@ $questions = $questionStmt->get_result();
                             <span class="badge <?php echo $isCorrect ? 'bg-success' : 'bg-danger'; ?>"><?php echo $isCorrect ? 'Correct' : 'Incorrect'; ?></span>
                         </div>
                         <p class="mb-3 fw-semibold"><?php echo htmlspecialchars($question['question'], ENT_QUOTES, 'UTF-8'); ?></p>
-                        <?php if (!empty($question['image_path'])): ?>
+                        <?php if (!empty($question['image_path']) && is_file(__DIR__ . '/../' . $question['image_path'])): ?>
                             <?php $questionImageUrl = appAssetUrl($question['image_path']); ?>
                             <div class="text-center mb-3">
                                 <img src="<?php echo htmlspecialchars($questionImageUrl, ENT_QUOTES, 'UTF-8'); ?>"

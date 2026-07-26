@@ -475,10 +475,24 @@ $activeQuizAttempt = $activeAttemptStmt->get_result()->fetch_assoc();
                                 ?>
                                 <?php if ($questions->num_rows > 0): ?>
                                     <?php while ($question = $questions->fetch_assoc()): ?>
+                                        <?php
+                                        $questionImagePath = trim($question['image_path'] ?? '');
+                                        $questionImageFullPath = $questionImagePath !== '' ? __DIR__ . '/../' . $questionImagePath : '';
+                                        if ($questionImageFullPath !== '') {
+                                            clearstatcache(true, $questionImageFullPath);
+                                        }
+                                        if ($questionImagePath !== '' && !is_file($questionImageFullPath)) {
+                                            $questionImagePath = '';
+                                        }
+                                        ?>
                                         <div class="border rounded p-3 mb-3">
                                             <p class="fw-bold mb-3"><?php echo htmlspecialchars($question['question'], ENT_QUOTES, 'UTF-8'); ?></p>
-                                            <?php if (!empty($question['image_path'])): ?>
-                                                <?php $questionImageUrl = appAssetUrl($question['image_path']); ?>
+                                            <?php if ($questionImagePath !== ''): ?>
+                                                <?php
+                                                $questionImageAssetUrl = appAssetUrl($questionImagePath);
+                                                $questionImageVersion = $questionImageFullPath !== '' && is_file($questionImageFullPath) ? filemtime($questionImageFullPath) : time();
+                                                $questionImageUrl = $questionImageAssetUrl . (strpos($questionImageAssetUrl, '?') === false ? '?' : '&') . 'v=' . $questionImageVersion;
+                                                ?>
                                                 <div class="text-center mb-3">
                                                     <img src="<?php echo htmlspecialchars($questionImageUrl, ENT_QUOTES, 'UTF-8'); ?>"
                                                          alt="Question image"
