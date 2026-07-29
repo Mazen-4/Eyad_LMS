@@ -1,10 +1,7 @@
 <?php
-require_once __DIR__ . '/../includes/auth.php';
-?>
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
+header('Location: index.php', true, 301);
+exit;
+?>    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Eyad Mazhar provides structured online math preparation for American-system students with lessons, resources, and quizzes.">
     <meta name="robots" content="noindex,nofollow">

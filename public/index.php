@@ -27,12 +27,13 @@ $baseUrl = rtrim($publicDir, '/') . '/';
     <link rel="apple-touch-icon" href="<?php echo htmlspecialchars(appAssetUrl('Images/eyad_logo1.jpeg'), ENT_QUOTES, 'UTF-8'); ?>">
     <meta property="og:title" content="Eyad Mazhar - Online Math Preparation for EST, DSAT, and ACT">
     <meta property="og:description" content="Explore structured math lessons, exam resources, and quiz-based practice from Eyad Mazhar for American-system students.">
-    <meta property="og:image" content="<?php echo htmlspecialchars(appAssetUrl('Images/eyad_logo1.jpeg'), ENT_QUOTES, 'UTF-8'); ?>">
+    <meta property="og:image" content="<?php echo htmlspecialchars(appAbsoluteUrl('Images/eyad_logo1.jpeg'), ENT_QUOTES, 'UTF-8'); ?>">
     <meta property="og:type" content="website">
-    <meta property="twitter:card" content="summary">
+    <meta property="og:url" content="<?php echo htmlspecialchars(appAbsoluteUrl('public/index.php'), ENT_QUOTES, 'UTF-8'); ?>">
+    <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:title" content="Eyad Mazhar - Online Math Preparation for EST, DSAT, and ACT">
     <meta property="twitter:description" content="Explore structured math lessons, exam resources, and quiz-based practice from Eyad Mazhar for American-system students.">
-    <meta name="twitter:image" content="<?php echo htmlspecialchars(appAssetUrl('Images/eyad_logo1.jpeg'), ENT_QUOTES, 'UTF-8'); ?>">
+    <meta name="twitter:image" content="<?php echo htmlspecialchars(appAbsoluteUrl('Images/eyad_logo1.jpeg'), ENT_QUOTES, 'UTF-8'); ?>">
     <title>Eyad LMS - Home</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="<?php echo htmlspecialchars(appVersionedAssetUrl('assets/css/theme.css'), ENT_QUOTES, 'UTF-8'); ?>" rel="stylesheet">

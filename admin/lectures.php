@@ -151,6 +151,10 @@ if ($editingLectureId > 0) {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Sessions - Admin</title>
+    <link rel="icon" href="<?php echo htmlspecialchars(appAssetUrl('Images/eyad_logo1.jpeg?v=' . filemtime(__DIR__ . '/../Images/eyad_logo1.jpeg')), ENT_QUOTES, 'UTF-8'); ?>" type="image/jpeg">
+    <link rel="shortcut icon" href="<?php echo htmlspecialchars(appAssetUrl('Images/eyad_logo1.jpeg?v=' . filemtime(__DIR__ . '/../Images/eyad_logo1.jpeg')), ENT_QUOTES, 'UTF-8'); ?>" type="image/jpeg">
+    <link rel="apple-touch-icon" href="<?php echo htmlspecialchars(appAssetUrl('Images/eyad_logo1.jpeg?v=' . filemtime(__DIR__ . '/../Images/eyad_logo1.jpeg')), ENT_QUOTES, 'UTF-8'); ?>">
+    <link rel="icon" href="<?php echo htmlspecialchars(appAssetUrl('favicon.ico?v=' . filemtime(__DIR__ . '/../favicon.ico')), ENT_QUOTES, 'UTF-8'); ?>" type="image/x-icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="<?php echo htmlspecialchars(appVersionedAssetUrl('assets/css/theme.css'), ENT_QUOTES, 'UTF-8'); ?>" rel="stylesheet">
 </head>
@@ -158,6 +162,7 @@ if ($editingLectureId > 0) {
     <?php include __DIR__ . '/../includes/admin_nav.php'; ?>
 
     <div class="container py-4">
+        <a href="dashboard.php" class="btn btn-outline-secondary mb-3">&larr; Back to Dashboard</a>
         <h1 class="mb-3">Sessions</h1>
         <p class="text-muted">Create sessions and link them to the groups that should access them.</p>
 

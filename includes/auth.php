@@ -110,16 +110,51 @@ function appAssetUrl(string $relativePath): string {
     }
 
     $normalizedRelativePath = ltrim($relativePath, '/');
+    $queryString = '';
+    $fragment = '';
+
+    if (strpos($normalizedRelativePath, '#') !== false) {
+        [$normalizedRelativePath, $fragment] = explode('#', $normalizedRelativePath, 2);
+    }
+
+    if (strpos($normalizedRelativePath, '?') !== false) {
+        [$normalizedRelativePath, $queryString] = explode('?', $normalizedRelativePath, 2);
+    }
+
     $segments = array_filter(explode('/', $normalizedRelativePath), static function ($segment) {
         return $segment !== '';
     });
     $encodedRelativePath = implode('/', array_map('rawurlencode', $segments));
+
+    if ($queryString !== '') {
+        $encodedRelativePath .= '?' . $queryString;
+    }
+
+    if ($fragment !== '') {
+        $encodedRelativePath .= '#' . $fragment;
+    }
 
     if ($basePath === '' || $basePath === '/') {
         return '/' . $encodedRelativePath;
     }
 
     return $basePath . '/' . $encodedRelativePath;
+}
+
+function appHostUrl(): string {
+    $isHttps = (!empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off') || (!empty($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] === '443');
+    $scheme = $isHttps ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? ($_SERVER['SERVER_NAME'] ?? 'localhost');
+    return $scheme . '://' . $host;
+}
+
+function appAbsoluteUrl(string $relativePath): string {
+    $assetUrl = appAssetUrl($relativePath);
+    if (preg_match('#^https?://#i', $assetUrl) === 1) {
+        return $assetUrl;
+    }
+    $hostUrl = rtrim(appHostUrl(), '/');
+    return $hostUrl . $assetUrl;
 }
 
 function appVersionedAssetUrl(string $relativePath): string {

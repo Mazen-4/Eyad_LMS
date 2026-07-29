@@ -367,6 +367,9 @@ $activeQuizAttempt = $activeAttemptStmt->get_result()->fetch_assoc();
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Quizzes - Student</title>
+    <link rel="icon" href="<?php echo htmlspecialchars(appAssetUrl('Images/eyad_logo1.jpeg?v=' . filemtime(__DIR__ . '/../Images/eyad_logo1.jpeg')), ENT_QUOTES, 'UTF-8'); ?>" type="image/jpeg">
+    <link rel="shortcut icon" href="<?php echo htmlspecialchars(appAssetUrl('Images/eyad_logo1.jpeg?v=' . filemtime(__DIR__ . '/../Images/eyad_logo1.jpeg')), ENT_QUOTES, 'UTF-8'); ?>" type="image/jpeg">
+    <link rel="apple-touch-icon" href="<?php echo htmlspecialchars(appAssetUrl('Images/eyad_logo1.jpeg?v=' . filemtime(__DIR__ . '/../Images/eyad_logo1.jpeg')), ENT_QUOTES, 'UTF-8'); ?>">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="<?php echo htmlspecialchars(appVersionedAssetUrl('assets/css/theme.css'), ENT_QUOTES, 'UTF-8'); ?>" rel="stylesheet">
 </head>
@@ -374,6 +377,7 @@ $activeQuizAttempt = $activeAttemptStmt->get_result()->fetch_assoc();
     <?php include __DIR__ . '/../includes/student_nav.php'; ?>
 
     <div class="container py-4">
+        <a href="dashboard.php" class="btn btn-outline-secondary mb-3">&larr; Back to Dashboard</a>
         <h1 class="mb-3">My Quizzes</h1>
         <p class="text-muted">These quizzes are available for your assigned group.</p>
 
@@ -800,5 +804,7 @@ $activeQuizAttempt = $activeAttemptStmt->get_result()->fetch_assoc();
             });
         });
     </script>
+
+    <?php include __DIR__ . '/../includes/public_footer.php'; ?>
 </body>
 </html>
