@@ -351,13 +351,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $conn->commit();
-            $imagesToDelete = array_unique($imagesToDelete);
-            foreach ($imagesToDelete as $oldImagePath) {
-                $oldImageFilePath = __DIR__ . '/../' . $oldImagePath;
-                if (is_file($oldImageFilePath)) {
-                    unlink($oldImageFilePath);
-                }
-            }
         } else {
             $conn->rollback();
             foreach ($newlyUploadedImagePaths as $uploadedPath) {

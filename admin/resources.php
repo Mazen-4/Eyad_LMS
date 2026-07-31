@@ -7,7 +7,6 @@ $conn = getDbConnection();
 $success = '';
 $error = '';
 $editingResourceId = (int)($_GET['edit'] ?? 0);
-$deletingResourceId = (int)($_GET['delete'] ?? 0);
 
 $conn->query("CREATE TABLE IF NOT EXISTS resource_group_access (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -18,7 +17,34 @@ $conn->query("CREATE TABLE IF NOT EXISTS resource_group_access (
     KEY group_id (group_id)
 )");
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
+    $deletingResourceId = (int)($_POST['resource_id'] ?? 0);
+
+    if ($deletingResourceId > 0) {
+        $resourceToDeleteStmt = $conn->prepare('SELECT pdf_path FROM resources WHERE id = ? LIMIT 1');
+        $resourceToDeleteStmt->bind_param('i', $deletingResourceId);
+        $resourceToDeleteStmt->execute();
+        $resourceToDelete = $resourceToDeleteStmt->get_result()->fetch_assoc();
+
+        if ($resourceToDelete && !empty($resourceToDelete['pdf_path'])) {
+            $filePath = __DIR__ . '/../' . $resourceToDelete['pdf_path'];
+            if (is_file($filePath)) {
+                unlink($filePath);
+            }
+        }
+
+        $clearAccessStmt = $conn->prepare('DELETE FROM resource_group_access WHERE resource_id = ?');
+        $clearAccessStmt->bind_param('i', $deletingResourceId);
+        $clearAccessStmt->execute();
+
+        $deleteStmt = $conn->prepare('DELETE FROM resources WHERE id = ?');
+        $deleteStmt->bind_param('i', $deletingResourceId);
+        $deleteStmt->execute();
+        $success = 'Resource deleted successfully.';
+    } else {
+        $error = 'Invalid resource ID.';
+    }
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? 'create';
     $resourceId = (int)($_POST['resource_id'] ?? 0);
     $title = trim($_POST['title'] ?? '');
@@ -128,29 +154,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
-}
-
-if ($deletingResourceId > 0 && $_SERVER['REQUEST_METHOD'] === 'GET') {
-    $resourceToDeleteStmt = $conn->prepare('SELECT pdf_path FROM resources WHERE id = ? LIMIT 1');
-    $resourceToDeleteStmt->bind_param('i', $deletingResourceId);
-    $resourceToDeleteStmt->execute();
-    $resourceToDelete = $resourceToDeleteStmt->get_result()->fetch_assoc();
-
-    if ($resourceToDelete && !empty($resourceToDelete['pdf_path'])) {
-        $filePath = __DIR__ . '/../' . $resourceToDelete['pdf_path'];
-        if (is_file($filePath)) {
-            unlink($filePath);
-        }
-    }
-
-    $clearAccessStmt = $conn->prepare('DELETE FROM resource_group_access WHERE resource_id = ?');
-    $clearAccessStmt->bind_param('i', $deletingResourceId);
-    $clearAccessStmt->execute();
-
-    $deleteStmt = $conn->prepare('DELETE FROM resources WHERE id = ?');
-    $deleteStmt->bind_param('i', $deletingResourceId);
-    $deleteStmt->execute();
-    $success = 'Resource deleted successfully.';
 }
 
 $groupsResult = $conn->query('SELECT id, name, level FROM `groups` ORDER BY name');
@@ -321,7 +324,11 @@ if ($editingResourceId > 0) {
                                         <td><?php echo htmlspecialchars(formatDisplayDateTime($resource['created_at']), ENT_QUOTES, 'UTF-8'); ?></td>
                                         <td>
                                             <a href="resources.php?edit=<?php echo (int)$resource['id']; ?>" class="btn btn-sm btn-outline-primary">Edit</a>
-                                            <a href="resources.php?delete=<?php echo (int)$resource['id']; ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this resource and its PDF file?');">Delete</a>
+                                            <form method="post" class="d-inline" onsubmit="return confirm('Delete this resource and its PDF file?');">
+                                                <input type="hidden" name="action" value="delete">
+                                                <input type="hidden" name="resource_id" value="<?php echo (int)$resource['id']; ?>">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                            </form>
                                         </td>
                                     </tr>
                                 <?php endwhile; ?>
