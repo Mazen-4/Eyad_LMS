@@ -648,7 +648,8 @@ $activeQuizAttempt = $activeAttemptStmt->get_result()->fetch_assoc();
                     } else if (storedState) {
                         try {
                             const parsedState = JSON.parse(storedState);
-                            if (parsedState && parsedState.startedAt) {
+                            // Only reuse stored state when it matches the current time limit to avoid stale/incorrect values
+                            if (parsedState && parsedState.startedAt && Number(parsedState.limitMinutes) === Number(timeLimitMinutes)) {
                                 startDate = new Date(parseInt(parsedState.startedAt, 10));
                             }
                         } catch (e) {
@@ -660,7 +661,26 @@ $activeQuizAttempt = $activeAttemptStmt->get_result()->fetch_assoc();
                         questionContainer.classList.remove('d-none');
                     }
                     timerLabel.classList.remove('d-none');
-                    const deadline = new Date(startDate.getTime() + (timeLimitMinutes * 60000));
+                    let deadline = new Date(startDate.getTime() + (timeLimitMinutes * 60000));
+                    // Immediately try to sync with server to get authoritative remaining time
+                    // and prefer the earlier (more restrictive) deadline when there's a mismatch.
+                    if (quizId && timeLimitMinutes > 0) {
+                        fetch('quiz_time_check.php?quiz_id=' + encodeURIComponent(quizId), { cache: 'no-store' })
+                        .then(function (response) { return response.json(); })
+                        .then(function (data) {
+                            if (data && typeof data.remaining_seconds === 'number') {
+                                const serverDeadline = Date.now() + Math.max(0, Math.floor(data.remaining_seconds)) * 1000;
+                                // prefer the earlier deadline to avoid showing extra time
+                                if (serverDeadline < deadline.getTime()) {
+                                    deadline = new Date(serverDeadline);
+                                }
+                                form._serverDeadline = serverDeadline;
+                            }
+                        })
+                        .catch(function () {
+                            // ignore fetch errors
+                        });
+                    }
 
                     if (form._timerHandle) {
                         window.clearTimeout(form._timerHandle);
