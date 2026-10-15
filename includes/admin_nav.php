@@ -18,6 +18,7 @@ if (!isset($user)) {
                 <li class="nav-item"><a class="nav-link" href="students.php">Students</a></li>
                 <li class="nav-item"><a class="nav-link" href="admins.php">Admins</a></li>
                 <li class="nav-item"><a class="nav-link" href="groups.php">Groups</a></li>
+                <li class="nav-item"><a class="nav-link" href="courses.php">Courses</a></li>
                 <li class="nav-item"><a class="nav-link" href="lectures.php">Sessions</a></li>
                 <li class="nav-item"><a class="nav-link" href="resources.php">Resources</a></li>
                 <li class="nav-item"><a class="nav-link" href="quizzes.php">Quizzes</a></li>

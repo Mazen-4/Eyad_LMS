@@ -389,6 +389,13 @@ if ($deletingQuizId > 0 && $_SERVER['REQUEST_METHOD'] === 'GET') {
     $clearAccessStmt->bind_param('i', $deletingQuizId);
     $clearAccessStmt->execute();
 
+    $courseQuizLinksTable = $conn->query("SHOW TABLES LIKE 'course_quizzes'");
+    if ($courseQuizLinksTable && $courseQuizLinksTable->num_rows > 0) {
+        $clearCourseLinksStmt = $conn->prepare('DELETE FROM course_quizzes WHERE quiz_id = ?');
+        $clearCourseLinksStmt->bind_param('i', $deletingQuizId);
+        $clearCourseLinksStmt->execute();
+    }
+
     $deleteQuizStmt = $conn->prepare('DELETE FROM quizzes WHERE id = ?');
     $deleteQuizStmt->bind_param('i', $deletingQuizId);
     $deleteQuizStmt->execute();

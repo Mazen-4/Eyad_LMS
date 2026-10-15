@@ -5,6 +5,7 @@ $user = requireLogin(['student', 'admin']);
 $conn = getDbConnection();
 
 $isAdmin = ($user['role'] === 'admin');
+$courseId = max(0, (int) ($_GET['course_id'] ?? 0));
 $attemptId = (int)($_GET['attempt_id'] ?? 0);
 if ($attemptId <= 0) {
     header('Location: quizzes.php');
@@ -54,7 +55,7 @@ $questions = $questionStmt->get_result();
                 <p class="text-muted mb-0">Learn from your attempt by reviewing each question, your answer, and the correct choice.</p>
             </div>
             <div class="text-end">
-                <a class="btn btn-outline-secondary" href="quizzes.php">Back to Quizzes</a>
+                <a class="btn btn-outline-secondary" href="quizzes.php<?php echo $courseId > 0 ? '?course_id=' . $courseId : ''; ?>">Back to Quizzes</a>
             </div>
         </div>
 

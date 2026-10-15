@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/course_content_access.php';
 
 $user = requireLogin(['student', 'admin']);
 $conn = getDbConnection();
@@ -57,6 +58,8 @@ if ($quizAttemptAnswersTableResult && $quizAttemptAnswersTableResult->num_rows =
 }
 
 $isAdmin = ($user['role'] === 'admin');
+$courseId = max(0, (int) ($_GET['course_id'] ?? $_POST['course_id'] ?? 0));
+$requestedQuizId = max(0, (int) ($_GET['quiz_id'] ?? 0));
 $studentGroupIds = array_values(array_unique(array_filter(array_map('intval', $user['group_ids'] ?? []))));
 if (empty($studentGroupIds) && !empty($user['group_id'])) {
     $studentGroupIds = [(int)$user['group_id']];
@@ -64,6 +67,9 @@ if (empty($studentGroupIds) && !empty($user['group_id'])) {
 $success = '';
 $error = '';
 $reviewAttemptId = 0;
+$quizUnavailableMessage = $courseId > 0
+    ? 'This quiz is not available in this course.'
+    : 'This quiz is not available for your group.';
 
 function expireTimedOutAttempts($conn, $studentId, $quizId = null) {
     if ($quizId !== null) {
@@ -97,6 +103,7 @@ expireTimedOutAttempts($conn, $user['id']);
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? 'submit_quiz';
     $quizId = (int)($_POST['quiz_id'] ?? 0);
+    $courseId = max(0, (int) ($_POST['course_id'] ?? $courseId));
     $answers = $_POST['answer'] ?? [];
     $startedAt = $_POST['started_at'] ?? '';
 
@@ -124,34 +131,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        if ($isAdmin) {
-            $quizCheck = $conn->prepare('SELECT id, time_limit_minutes, max_attempts FROM quizzes WHERE id = ? AND status = "active" LIMIT 1');
-            $quizCheck->bind_param('i', $quizId);
-            $quizCheck->execute();
-            $quiz = $quizCheck->get_result()->fetch_assoc();
-        } elseif (!empty($studentGroupIds)) {
-            $placeholders = implode(', ', array_fill(0, count($studentGroupIds), '?'));
-            $quizCheck = $conn->prepare('SELECT id, time_limit_minutes, max_attempts FROM quizzes WHERE id = ? AND group_id IN (' . $placeholders . ') AND status = "active" LIMIT 1');
-            $params = array_merge([$quizId], $studentGroupIds);
-            bindPreparedParams($quizCheck, $params);
-            $quizCheck->execute();
-            $quiz = $quizCheck->get_result()->fetch_assoc();
-
-            if (!$quiz) {
-                $placeholders = implode(', ', array_fill(0, count($studentGroupIds), '?'));
-                $quizCheck = $conn->prepare('SELECT q.id, q.time_limit_minutes, q.max_attempts FROM quizzes q LEFT JOIN quiz_group_access qga ON qga.quiz_id = q.id WHERE q.id = ? AND q.status = "active" AND (q.group_id IN (' . $placeholders . ') OR qga.group_id IN (' . $placeholders . ')) LIMIT 1');
-                $params = array_merge([$quizId], $studentGroupIds, $studentGroupIds);
-                bindPreparedParams($quizCheck, $params);
-                $quizCheck->execute();
-                $quiz = $quizCheck->get_result()->fetch_assoc();
-            }
-        } else {
-            $quiz = null;
-        }
+        $quiz = getAccessibleQuiz($conn, $quizId, $studentGroupIds, $isAdmin, $courseId);
 
         if (!$quiz) {
             header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'message' => 'This quiz is not available for your group.']);
+            echo json_encode(['success' => false, 'message' => $quizUnavailableMessage]);
             exit;
         }
 
@@ -208,33 +192,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($quizId <= 0) {
         $error = 'Invalid quiz.';
     } else {
-        if ($isAdmin) {
-            $quizCheck = $conn->prepare('SELECT id, time_limit_minutes, max_attempts FROM quizzes WHERE id = ? AND status = "active" LIMIT 1');
-            $quizCheck->bind_param('i', $quizId);
-            $quizCheck->execute();
-            $quiz = $quizCheck->get_result()->fetch_assoc();
-        } elseif (!empty($studentGroupIds)) {
-            $placeholders = implode(', ', array_fill(0, count($studentGroupIds), '?'));
-            $quizCheck = $conn->prepare('SELECT id, time_limit_minutes, max_attempts FROM quizzes WHERE id = ? AND group_id IN (' . $placeholders . ') AND status = "active" LIMIT 1');
-            $params = array_merge([$quizId], $studentGroupIds);
-            bindPreparedParams($quizCheck, $params);
-            $quizCheck->execute();
-            $quiz = $quizCheck->get_result()->fetch_assoc();
-
-            if (!$quiz) {
-                $placeholders = implode(', ', array_fill(0, count($studentGroupIds), '?'));
-                $quizCheck = $conn->prepare('SELECT q.id, q.time_limit_minutes, q.max_attempts FROM quizzes q LEFT JOIN quiz_group_access qga ON qga.quiz_id = q.id WHERE q.id = ? AND q.status = "active" AND (q.group_id IN (' . $placeholders . ') OR qga.group_id IN (' . $placeholders . ')) LIMIT 1');
-                $params = array_merge([$quizId], $studentGroupIds, $studentGroupIds);
-                bindPreparedParams($quizCheck, $params);
-                $quizCheck->execute();
-                $quiz = $quizCheck->get_result()->fetch_assoc();
-            }
-        } else {
-            $quiz = null;
-        }
+        $quiz = getAccessibleQuiz($conn, $quizId, $studentGroupIds, $isAdmin, $courseId);
 
         if (!$quiz) {
-            $error = 'This quiz is not available for your group.';
+            $error = $quizUnavailableMessage;
         } else {
             $maxAttempts = (int)($quiz['max_attempts'] ?? 0);
             $attemptCountStmt = $conn->prepare('SELECT COUNT(*) AS attempts FROM quiz_attempts WHERE student_id = ? AND quiz_id = ? AND status != "in_progress"');
@@ -344,16 +305,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$activeQuizAttempt = null;
-if (!empty($studentGroupIds) && !$isAdmin) {
-    $placeholders = implode(', ', array_fill(0, count($studentGroupIds), '?'));
-    $quizzesStmt = $conn->prepare('SELECT DISTINCT q.id, q.title, q.time_limit_minutes, q.max_attempts FROM quizzes q LEFT JOIN quiz_group_access qga ON qga.quiz_id = q.id WHERE q.status = "active" AND (q.group_id IN (' . $placeholders . ') OR qga.group_id IN (' . $placeholders . ')) ORDER BY q.created_at DESC');
-    $params = array_merge($studentGroupIds, $studentGroupIds);
-    bindPreparedParams($quizzesStmt, $params);
-    $quizzesStmt->execute();
-    $quizzesResult = $quizzesStmt->get_result();
-} else {
-    $quizzesResult = $conn->query('SELECT id, title, time_limit_minutes, max_attempts FROM quizzes WHERE status = "active" ORDER BY created_at DESC');
+$quizRows = getAccessibleQuizzes($conn, $studentGroupIds, $isAdmin, $courseId);
+if ($requestedQuizId > 0) {
+    $selectedQuiz = getAccessibleQuiz($conn, $requestedQuizId, $studentGroupIds, $isAdmin, $courseId);
+    $quizRows = $selectedQuiz ? [$selectedQuiz] : [];
 }
 
 $activeAttemptStmt = $conn->prepare('SELECT quiz_id FROM quiz_attempts WHERE student_id = ? AND status = "in_progress" LIMIT 1');
@@ -377,9 +332,12 @@ $activeQuizAttempt = $activeAttemptStmt->get_result()->fetch_assoc();
     <?php include __DIR__ . '/../includes/student_nav.php'; ?>
 
     <div class="container py-4">
+        <?php if ($courseId > 0): ?>
+            <a href="lectures.php?course_id=<?php echo $courseId; ?>" class="btn btn-outline-secondary mb-3">&larr; Back to course</a>
+        <?php endif; ?>
         <a href="dashboard.php" class="btn btn-outline-secondary mb-3">&larr; Back to Dashboard</a>
         <h1 class="mb-3">My Quizzes</h1>
-        <p class="text-muted">These quizzes are available for your assigned group.</p>
+        <p class="text-muted"><?php echo $courseId > 0 ? 'This quiz is part of your course.' : 'These quizzes are available for your assigned group.'; ?></p>
 
         <?php if ($success !== ''): ?>
             <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -388,7 +346,7 @@ $activeQuizAttempt = $activeAttemptStmt->get_result()->fetch_assoc();
             </div>
             <?php if ($reviewAttemptId > 0): ?>
                 <div class="mb-3">
-                    <a class="btn btn-success" href="quiz_review.php?attempt_id=<?php echo (int)$reviewAttemptId; ?>">Review Your Quiz Results</a>
+                    <a class="btn btn-success" href="quiz_review.php?attempt_id=<?php echo (int)$reviewAttemptId; ?><?php echo $courseId > 0 ? '&amp;course_id=' . $courseId : ''; ?>">Review Your Quiz Results</a>
                 </div>
             <?php endif; ?>
         <?php endif; ?>
@@ -400,13 +358,8 @@ $activeQuizAttempt = $activeAttemptStmt->get_result()->fetch_assoc();
             </div>
         <?php endif; ?>
 
-        <?php if (!empty($quizzesResult) && $quizzesResult->num_rows > 0): ?>
+        <?php if ($quizRows !== []): ?>
             <?php
-            $quizRows = [];
-            while ($quizRow = $quizzesResult->fetch_assoc()) {
-                $quizRows[] = $quizRow;
-            }
-            $quizRows = array_values($quizRows);
             $attemptedQuizIds = [];
             if (!empty($quizRows)) {
                 $attemptedQuizIdsStmt = $conn->prepare('SELECT DISTINCT quiz_id FROM quiz_attempts WHERE student_id = ? AND status != "in_progress"');
@@ -458,11 +411,12 @@ $activeQuizAttempt = $activeAttemptStmt->get_result()->fetch_assoc();
                         ?>
                         <form method="post" class="mt-3 quiz-form" data-time-limit-minutes="<?php echo (int)($quiz['time_limit_minutes'] ?? 0); ?>" data-active-started-at="<?php echo htmlspecialchars($quizActiveStartedAt, ENT_QUOTES, 'UTF-8'); ?>" data-has-active-attempt="<?php echo ($quizActiveStatus === 'in_progress') ? '1' : '0'; ?>">
                             <input type="hidden" name="quiz_id" value="<?php echo (int)$quiz['id']; ?>">
+                            <input type="hidden" name="course_id" value="<?php echo $courseId; ?>">
                             <input type="hidden" name="started_at" class="started-at-input" value="<?php echo htmlspecialchars($quizActiveStartedAt, ENT_QUOTES, 'UTF-8'); ?>">
                             <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
                                 <button type="button" class="btn btn-primary start-quiz-btn" data-quiz-id="<?php echo (int)$quiz['id']; ?>" <?php echo (!empty($activeQuizAttempt) && ((int)($activeQuizAttempt['quiz_id'] ?? 0) !== (int)$quiz['id'])) ? 'disabled' : ''; ?>><?php echo (!empty($activeQuizAttempt) && ((int)($activeQuizAttempt['quiz_id'] ?? 0) === (int)$quiz['id'])) ? 'Continue Attempt' : 'Start Attempt'; ?></button>
                                 <?php if ($latestAttemptId > 0): ?>
-                                    <a class="btn btn-outline-success" href="quiz_review.php?attempt_id=<?php echo $latestAttemptId; ?>">Review Last Attempt</a>
+                                    <a class="btn btn-outline-success" href="quiz_review.php?attempt_id=<?php echo $latestAttemptId; ?><?php echo $courseId > 0 ? '&amp;course_id=' . $courseId : ''; ?>">Review Last Attempt</a>
                                 <?php endif; ?>
                                 <button type="button" class="btn btn-outline-secondary toggle-attempts-btn">View Attempts</button>
                                 <span class="quiz-timer text-danger fw-bold d-none"></span>
@@ -578,7 +532,7 @@ $activeQuizAttempt = $activeAttemptStmt->get_result()->fetch_assoc();
                 </div>
             <?php endforeach; ?>
         <?php else: ?>
-            <div class="alert alert-info">No quizzes are available for your group yet.</div>
+            <div class="alert alert-info"><?php echo $courseId > 0 ? 'No quizzes are available in this course right now.' : 'No quizzes are available for your group yet.'; ?></div>
         <?php endif; ?>
     </div>
     <script>

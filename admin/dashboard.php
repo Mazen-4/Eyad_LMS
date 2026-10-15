@@ -70,6 +70,17 @@ $user = requireLogin(['admin']);
                 </a>
             </div>
             <div class="col-md-4">
+                <a href="courses.php" class="text-decoration-none text-dark">
+                    <div class="card h-100 shadow-sm hover-shadow">
+                        <div class="card-body">
+                            <h5 class="card-title">Courses &amp; Outline</h5>
+                            <p class="card-text">Group sessions into courses and organize ordered video, document, and quiz items.</p>
+                            <span class="btn btn-outline-primary btn-sm mt-2">Open Courses</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-4">
                 <a href="resources.php" class="text-decoration-none text-dark">
                     <div class="card h-100 shadow-sm hover-shadow">
                         <div class="card-body">

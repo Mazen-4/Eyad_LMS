@@ -44,10 +44,100 @@ function normalizeDriveLink($value)
     }
 
     if (preg_match('/^[a-zA-Z0-9\-_]+$/', $value)) {
-        return 'https://drive.google.com/drive/folders/' . $value;
+        return 'https://drive.google.com/file/d/' . $value . '/preview?rm=minimal';
     }
 
     return $value;
+}
+
+function ensureLectureOutlineModule($conn, $lectureId, $title, $videoUrl, $displayOrder, $lectureStatus, $previousVideoUrl = '')
+{
+    $schemaStatement = $conn->prepare("
+        SELECT
+            (SELECT COUNT(*)
+             FROM information_schema.tables
+             WHERE table_schema = DATABASE()
+               AND table_name IN ('course_modules', 'module_items')) AS table_count,
+            (SELECT COUNT(*)
+             FROM information_schema.columns
+             WHERE table_schema = DATABASE()
+               AND (
+                   (table_name = 'course_modules' AND column_name = 'status' AND column_type LIKE '%inactive%')
+                   OR (table_name = 'module_items' AND column_name = 'status' AND column_type LIKE '%inactive%')
+               )) AS inactive_status_count
+    ");
+    $schemaStatement->execute();
+    $schema = $schemaStatement->get_result()->fetch_assoc();
+    if ((int) ($schema['table_count'] ?? 0) !== 2
+        || (int) ($schema['inactive_status_count'] ?? 0) !== 2) {
+        return;
+    }
+
+    $moduleStatus = $lectureStatus === 'active' ? 'active' : 'inactive';
+    $moduleStatement = $conn->prepare("
+        INSERT INTO course_modules (lecture_id, title, display_order, status)
+        VALUES (?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+            title = VALUES(title),
+            display_order = VALUES(display_order),
+            status = VALUES(status)
+    ");
+    $moduleStatement->bind_param('isis', $lectureId, $title, $displayOrder, $moduleStatus);
+    $moduleStatement->execute();
+
+    $moduleIdStatement = $conn->prepare('SELECT id FROM course_modules WHERE lecture_id = ? LIMIT 1');
+    $moduleIdStatement->bind_param('i', $lectureId);
+    $moduleIdStatement->execute();
+    $module = $moduleIdStatement->get_result()->fetch_assoc();
+    if (!$module) {
+        throw new RuntimeException('Could not load the outline session created for this lecture.');
+    }
+
+    $itemExistsStatement = $conn->prepare("
+        SELECT id, content_url, status
+        FROM module_items
+        WHERE module_id = ? AND item_type = 'video' AND display_order = 1
+        LIMIT 1
+    ");
+    $moduleId = (int) $module['id'];
+    $itemExistsStatement->bind_param('i', $moduleId);
+    $itemExistsStatement->execute();
+    $existingVideo = $itemExistsStatement->get_result()->fetch_assoc();
+    if (trim((string) $videoUrl) === '') {
+        if ($existingVideo
+            && $previousVideoUrl !== ''
+            && normalizeDriveLink($existingVideo['content_url']) === $previousVideoUrl
+            && $existingVideo['status'] !== 'archived') {
+            $itemId = (int) $existingVideo['id'];
+            $hideVideo = $conn->prepare("UPDATE module_items SET status = 'inactive' WHERE id = ?");
+            $hideVideo->bind_param('i', $itemId);
+            $hideVideo->execute();
+        }
+        return;
+    }
+
+    if ($existingVideo) {
+        if ($previousVideoUrl !== '' && normalizeDriveLink($existingVideo['content_url']) === $previousVideoUrl) {
+            $itemStatus = $existingVideo['status'] === 'archived' ? 'archived' : $moduleStatus;
+            $updateVideo = $conn->prepare("
+                UPDATE module_items
+                SET content_url = ?, status = ?
+                WHERE id = ?
+            ");
+            $itemId = (int) $existingVideo['id'];
+            $updateVideo->bind_param('ssi', $videoUrl, $itemStatus, $itemId);
+            $updateVideo->execute();
+        }
+        return;
+    }
+
+    $videoTitle = 'Step 1: ' . $title;
+    $insertVideo = $conn->prepare("
+        INSERT INTO module_items (module_id, item_type, title, content_url, display_order, status)
+        VALUES (?, 'video', ?, ?, 1, ?)
+    ");
+    $insertVideo->bind_param('isss', $moduleId, $videoTitle, $videoUrl, $moduleStatus);
+    $insertVideo->execute();
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -64,6 +154,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Lecture title is required.';
     } else {
         if ($action === 'edit' && $lectureId > 0) {
+            $previousLectureStmt = $conn->prepare('SELECT drive_folder_id FROM lectures WHERE id = ? LIMIT 1');
+            $previousLectureStmt->bind_param('i', $lectureId);
+            $previousLectureStmt->execute();
+            $previousLecture = $previousLectureStmt->get_result()->fetch_assoc();
+            if (!$previousLecture) {
+                throw new RuntimeException('The session no longer exists.');
+            }
+
             $stmt = $conn->prepare('UPDATE lectures SET title = ?, description = ?, drive_folder_id = ?, display_order = ?, status = ? WHERE id = ?');
             $stmt->bind_param('sssssi', $title, $description, $driveFolderId, $displayOrder, $status, $lectureId);
             $stmt->execute();
@@ -83,6 +181,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
+            $previousVideoUrl = normalizeDriveLink($previousLecture['drive_folder_id'] ?? '');
+            ensureLectureOutlineModule($conn, $lectureId, $title, $driveFolderId, $displayOrder, $status, $previousVideoUrl);
             $success = 'Lecture updated successfully.';
         } else {
             $stmt = $conn->prepare('INSERT INTO lectures (title, description, drive_folder_id, display_order, status) VALUES (?, ?, ?, ?, ?)');
@@ -101,8 +201,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
+            ensureLectureOutlineModule($conn, $lectureId, $title, $driveFolderId, $displayOrder, $status);
             $success = 'Lecture created successfully.';
         }
+
     }
 }
 
@@ -193,8 +295,8 @@ if ($editingLectureId > 0) {
                         <input type="text" name="title" class="form-control" value="<?php echo htmlspecialchars($editingLecture['title'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Drive Link or Folder ID</label>
-                        <input type="text" name="drive_folder_id" class="form-control" placeholder="Google Drive link or folder ID" value="<?php echo htmlspecialchars($editingLecture['drive_folder_id'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                        <label class="form-label">Video Link or Drive Video ID</label>
+                        <input type="text" name="drive_folder_id" class="form-control" placeholder="Direct Google Drive video link or video ID" value="<?php echo htmlspecialchars($editingLecture['drive_folder_id'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
                     </div>
                     <div class="col-md-2">
                         <label class="form-label">Display Order</label>

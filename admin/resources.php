@@ -37,6 +37,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
         $clearAccessStmt->bind_param('i', $deletingResourceId);
         $clearAccessStmt->execute();
 
+        $courseResourceLinksTable = $conn->query("SHOW TABLES LIKE 'course_resources'");
+        if ($courseResourceLinksTable && $courseResourceLinksTable->num_rows > 0) {
+            $clearCourseLinksStmt = $conn->prepare('DELETE FROM course_resources WHERE resource_id = ?');
+            $clearCourseLinksStmt->bind_param('i', $deletingResourceId);
+            $clearCourseLinksStmt->execute();
+        }
+
         $deleteStmt = $conn->prepare('DELETE FROM resources WHERE id = ?');
         $deleteStmt->bind_param('i', $deletingResourceId);
         $deleteStmt->execute();

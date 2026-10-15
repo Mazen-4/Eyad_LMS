@@ -1,7 +1,9 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/course_outline_service.php';
 
 $user = requireLogin(['student', 'admin']);
+$_SESSION['csrf_token'] ??= bin2hex(random_bytes(32));
 $conn = getDbConnection();
 
 $isAdmin = ($user['role'] === 'admin');
@@ -12,6 +14,8 @@ if (empty($studentGroupIds) && !empty($user['group_id'])) {
 $lectureId = (int)($_GET['lecture_id'] ?? 0);
 $error = '';
 $lecture = null;
+$completionItem = null;
+$playerCourseProgress = null;
 $sourceType = 'empty';
 $sourceUrl = '';
 
@@ -152,6 +156,64 @@ if ($lecture) {
     $lectureSource = resolveLectureSource($lecture['drive_folder_id'] ?? '');
     $sourceType = $lectureSource['type'];
     $sourceUrl = $lectureSource['url'];
+
+    if (!$isAdmin && $studentGroupIds !== []) {
+        $outlineService = new CourseOutlineService($conn);
+        if ($outlineService->hasCourseSchema()) {
+            $groupPlaceholders = implode(', ', array_fill(0, count($studentGroupIds), '?'));
+            $completionStatement = $conn->prepare("
+                SELECT mi.id AS item_id, mi.title AS item_title, mi.status AS item_status,
+                       c.id AS course_id, c.title AS course_title,
+                       CASE WHEN uip.item_id IS NULL THEN 0 ELSE 1 END AS is_completed
+                FROM course_modules cm
+                INNER JOIN module_items mi
+                    ON mi.module_id = cm.id
+                   AND mi.item_type = 'video'
+                   AND mi.display_order = 1
+                   AND mi.status = 'active'
+                INNER JOIN courses c
+                    ON c.id = cm.course_id
+                   AND c.status = 'active'
+                INNER JOIN course_group_access cga
+                    ON cga.course_id = c.id
+                INNER JOIN lecture_folder_access lfa
+                    ON lfa.lecture_id = cm.lecture_id
+                   AND lfa.group_id = cga.group_id
+                LEFT JOIN user_item_progress uip
+                    ON uip.item_id = mi.id
+                   AND uip.user_id = ?
+                WHERE cm.lecture_id = ?
+                  AND cm.status = 'active'
+                  AND cga.group_id IN ($groupPlaceholders)
+                ORDER BY c.display_order, c.id
+                LIMIT 1
+            ");
+            $completionParams = array_merge([(int) $user['id'], $lectureId], $studentGroupIds);
+            bindPreparedParams($completionStatement, $completionParams);
+            $completionStatement->execute();
+            $completionItem = $completionStatement->get_result()->fetch_assoc();
+
+            if ($completionItem) {
+                $courseSessions = $outlineService->getSessionsForCourse(
+                    (int) $completionItem['course_id'],
+                    (int) $user['id'],
+                    $studentGroupIds,
+                    false
+                );
+                $totalItems = 0;
+                $completedItems = 0;
+                foreach ($courseSessions as $courseSession) {
+                    $totalItems += $courseSession['item_count'];
+                    $completedItems += $courseSession['completed_count'];
+                }
+                $playerCourseProgress = [
+                    'total' => $totalItems,
+                    'completed' => $completedItems,
+                    'percent' => $totalItems > 0 ? (int) round(($completedItems / $totalItems) * 100) : 0,
+                ];
+            }
+        }
+    }
 } else {
     $error = 'This session is not available for your group.';
 }
@@ -179,6 +241,17 @@ if ($lecture) {
             display: block;
         }
 
+        .course-player-progress__item {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            border: 1px solid #d9dee7;
+            border-radius: 0.5rem;
+            padding: 0.85rem;
+        }
+
         .security-overlay {
             position: fixed;
             inset: 0;
@@ -204,6 +277,11 @@ if ($lecture) {
             .player-frame {
                 min-height: 45vh;
                 max-height: 60vh;
+            }
+
+            .course-player-progress__item .btn {
+                width: 100%;
+                min-height: 2.75rem;
             }
         }
     </style>
@@ -475,7 +553,7 @@ if ($lecture) {
                     <?php endif; ?>
 
                     <?php if (($sourceType === 'video' || $sourceType === 'drive_file') && $sourceUrl !== '' && isVideoSourceUrl($sourceUrl)): ?>
-                        <video id="lecture-video" class="player-frame" controls preload="metadata" playsinline crossorigin="anonymous">
+                        <video id="lecture-video" class="player-frame" controls preload="metadata" playsinline disablepictureinpicture disableremoteplayback controlslist="noremoteplayback" crossorigin="anonymous">
                             <source src="<?php echo htmlspecialchars(buildVideoProxyUrl($sourceUrl), ENT_QUOTES, 'UTF-8'); ?>">
                             Your browser does not support the video player.
                         </video>
@@ -499,10 +577,58 @@ if ($lecture) {
                             This session does not have a video source yet. The admin can add a direct video link or upload a file later.
                         </div>
                     <?php endif; ?>
+
+                    <?php if ($completionItem && $playerCourseProgress !== null): ?>
+                        <section
+                            class="course-player-progress mt-4"
+                            aria-label="Course item completion"
+                            data-course-outline
+                            data-api-url="<?php echo htmlspecialchars(appAssetUrl('api/mark-completed.php'), ENT_QUOTES, 'UTF-8'); ?>"
+                            data-csrf-token="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>"
+                            data-course-total="<?php echo (int) $playerCourseProgress['total']; ?>"
+                            data-course-completed="<?php echo (int) $playerCourseProgress['completed']; ?>"
+                        >
+                            <h2 class="h5">Course: <?php echo htmlspecialchars($completionItem['course_title'], ENT_QUOTES, 'UTF-8'); ?></h2>
+                            <article
+                                class="course-player-progress__item<?php echo $completionItem['is_completed'] ? ' is-completed' : ''; ?>"
+                                data-item-row
+                                data-completed="<?php echo $completionItem['is_completed'] ? 'true' : 'false'; ?>"
+                            >
+                                <span><?php echo htmlspecialchars($completionItem['item_title'], ENT_QUOTES, 'UTF-8'); ?></span>
+                                <button
+                                    class="btn btn-success"
+                                    type="button"
+                                    data-complete
+                                    data-item-id="<?php echo (int) $completionItem['item_id']; ?>"
+                                    <?php echo $completionItem['is_completed'] ? 'disabled aria-pressed="true"' : 'aria-pressed="false"'; ?>
+                                ><?php echo $completionItem['is_completed'] ? 'Completed' : 'Mark as complete'; ?></button>
+                            </article>
+                            <div
+                                class="progress mt-3"
+                                role="progressbar"
+                                aria-label="Overall course completion"
+                                aria-valuemin="0"
+                                aria-valuemax="100"
+                                aria-valuenow="<?php echo (int) $playerCourseProgress['percent']; ?>"
+                                data-course-progress
+                            >
+                                <div class="progress-bar" style="width: <?php echo (int) $playerCourseProgress['percent']; ?>%"></div>
+                            </div>
+                            <p class="course-sidebar__percent mb-0" data-course-progress-label><?php echo (int) $playerCourseProgress['percent']; ?>% complete</p>
+                            <p class="course-player-progress__feedback alert alert-info py-2 mt-3 mb-0 d-none" role="status" aria-live="polite" data-outline-status></p>
+                        </section>
+                    <?php elseif (!$isAdmin): ?>
+                        <div class="alert alert-info mt-4 mb-0" role="status">
+                            Completion tracking is available for sessions assigned to an active course. This session is not currently linked to one for your group.
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
         <?php endif; ?>
     </div>
+    <?php if ($completionItem): ?>
+        <script src="<?php echo htmlspecialchars(appVersionedAssetUrl('assets/js/course-outline.js'), ENT_QUOTES, 'UTF-8'); ?>" defer></script>
+    <?php endif; ?>
     <?php include __DIR__ . '/../includes/public_footer.php'; ?>
 </body>
 </html>

@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/course_content_access.php';
 
 $user = requireLogin(['student', 'admin']);
 $conn = getDbConnection();
@@ -10,16 +11,7 @@ if (empty($studentGroupIds) && !empty($user['group_id'])) {
     $studentGroupIds = [(int)$user['group_id']];
 }
 
-if (!empty($studentGroupIds) && !$isAdmin) {
-    $placeholders = implode(', ', array_fill(0, count($studentGroupIds), '?'));
-    $resourcesStmt = $conn->prepare('SELECT DISTINCT r.id, r.title, r.description, r.pdf_path FROM resources r LEFT JOIN resource_group_access rga ON rga.resource_id = r.id WHERE r.status = "active" AND (r.group_id IN (' . $placeholders . ') OR rga.group_id IN (' . $placeholders . ')) ORDER BY r.created_at DESC');
-    $params = array_merge($studentGroupIds, $studentGroupIds);
-    bindPreparedParams($resourcesStmt, $params);
-    $resourcesStmt->execute();
-    $resourcesResult = $resourcesStmt->get_result();
-} else {
-    $resourcesResult = $conn->query('SELECT id, title, description, pdf_path FROM resources WHERE status = "active" ORDER BY created_at DESC');
-}
+$resources = getAccessibleResources($conn, $studentGroupIds, $isAdmin);
 ?>
 <!doctype html>
 <html lang="en">
@@ -40,23 +32,23 @@ if (!empty($studentGroupIds) && !$isAdmin) {
     <div class="container py-4">
         <a href="dashboard.php" class="btn btn-outline-secondary mb-3">&larr; Back to Dashboard</a>
         <h1 class="mb-3">My Resources</h1>
-        <p class="text-muted">These PDFs are available for your assigned group.</p>
+        <p class="text-muted">These PDFs are available directly to your group. Course-linked resources appear in their course.</p>
 
-        <?php if ($resourcesResult->num_rows > 0): ?>
+        <?php if ($resources !== []): ?>
             <div class="row g-3">
-                <?php while ($resource = $resourcesResult->fetch_assoc()): ?>
+                <?php foreach ($resources as $resource): ?>
                     <div class="col-12 col-md-6">
                         <div class="card h-100 shadow-sm">
                             <div class="card-body">
                                 <h5 class="card-title"><?php echo htmlspecialchars($resource['title'], ENT_QUOTES, 'UTF-8'); ?></h5>
                                 <p class="card-text"><?php echo htmlspecialchars($resource['description'] ?? '-', ENT_QUOTES, 'UTF-8'); ?></p>
                                 <?php if (!empty($resource['pdf_path'])): ?>
-                                    <a href="../<?php echo htmlspecialchars($resource['pdf_path'], ENT_QUOTES, 'UTF-8'); ?>" target="_blank" class="btn btn-outline-primary btn-sm w-100 w-md-auto">Open PDF</a>
+                                    <a href="resource_download.php?resource_id=<?php echo (int) $resource['id']; ?>" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-sm w-100 w-md-auto">Open PDF</a>
                                 <?php endif; ?>
                             </div>
                         </div>
                     </div>
-                <?php endwhile; ?>
+                <?php endforeach; ?>
             </div>
         <?php else: ?>
             <div class="alert alert-info">No resources are available for your group yet.</div>

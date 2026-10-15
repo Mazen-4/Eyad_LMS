@@ -70,6 +70,7 @@ All admin pages require the `admin` role. The shared admin navigation provides:
 - `admin/students.php` - create, edit, transfer, deactivate, and delete student accounts
 - `admin/admins.php` - create, edit, deactivate, and delete additional admin accounts
 - `admin/groups.php` - create, edit, and delete learning groups with a level label
+- `admin/courses.php` - create courses, assign access groups, place existing sessions into courses, and manage ordered session items
 - `admin/lectures.php` - manage sessions, descriptions, order, active status, and group access
 - `admin/resources.php` - upload, edit, activate/deactivate, assign, and delete PDF resources
 - `admin/quizzes.php` - create and edit quizzes, questions, images, access, limits, and overrides
@@ -131,7 +132,15 @@ The admin interface labels lectures as **Sessions**. Each session has:
 - active/inactive status
 - one or more allowed groups
 
-Sessions are not stored as video files on the hosting account. The player accepts Google Drive file URLs, Google Drive folder URLs, Drive IDs, YouTube URLs, and direct video URLs. Google Drive file and folder references are normalized before rendering.
+Sessions are not stored as video files on the hosting account. The legacy player accepts Google Drive file URLs, Google Drive folder URLs, Drive IDs, YouTube URLs, and direct video URLs. For new session outline items, use a direct video link or Drive video ID; Drive IDs are interpreted as video IDs, not folder IDs.
+
+### Courses and session outlines
+
+The additive migrations in `database/` introduce explicit courses, course-to-group access, ordered module items, per-student item progress, and links from courses to existing resources and quizzes. Run `course_sessions_modules_migration.sql`, then `course_entities_migration.sql` (a one-time migration), then `course_content_links_migration.sql`.
+
+Use `admin/courses.php` to create a course, assign one or more existing groups, assign already-created sessions, link existing PDF resources and quizzes, and manage ordered video/document items within a session. Linked resources and quizzes are available through their course's groups; unlinked records continue to use their existing group permissions. Session assignment is only allowed when at least one group linked to the course also has access to the session through `lecture_folder_access`. The existing Sessions admin page remains responsible for session metadata and its group permissions.
+
+Existing sessions, resources, and quizzes are intentionally left unassigned by the migrations. Unlinked content remains available through the existing group-filtered student pages until an admin links it to a course. Students see one selected course at a time; marking session-item completion is explicit because embedded providers such as Google Drive do not reliably report playback completion. Archiving an item preserves its progress history.
 
 ### Resources
 
@@ -217,7 +226,7 @@ Eyad_LMS/
 ├── admin/                 # admin-only management pages
 ├── assets/css/            # shared theme stylesheet
 ├── config/                # database connection and application setup
-├── database/              # reserved for database scripts; currently empty
+├── database/              # explicit course and content-link migrations
 ├── Images/                # branding image assets
 ├── includes/              # authentication and shared navigation/footer partials
 ├── public/                # public home, about, contact, and login pages
@@ -233,7 +242,7 @@ Eyad_LMS/
 
 ## Database Tables
 
-There is currently no SQL dump in `database/`. Several application pages create or upgrade supporting tables with `CREATE TABLE IF NOT EXISTS` and `ALTER TABLE` statements when they are accessed. The configured database must still exist, and the foundational tables used by the application must be available before normal operation.
+The `database/` directory contains explicit course-outline migrations. Several older application pages also create or upgrade supporting tables with `CREATE TABLE IF NOT EXISTS` and `ALTER TABLE` statements when they are accessed. The configured database must still exist, and the foundational tables used by the application must be available before normal operation.
 
 The current application uses these tables:
 
@@ -242,6 +251,13 @@ The current application uses these tables:
 - `user_group_access` - additional student-to-group memberships
 - `lectures` - session metadata and external media references
 - `lecture_folder_access` - session-to-group access rows
+- `courses` - course title, description, order, and status
+- `course_group_access` - course-to-student-group access rows
+- `course_modules` - session outline nodes and optional course assignment
+- `course_resources` - links from courses to existing PDF resource records
+- `course_quizzes` - links from courses to existing quiz records
+- `module_items` - ordered video, quiz, and document items within a session
+- `user_item_progress` - completion timestamp for a student and outline item
 - `resources` - PDF metadata and stored paths
 - `resource_group_access` - resource-to-group access rows
 - `quizzes` - quiz title, primary group, status, time limit, and attempt limit
@@ -307,4 +323,3 @@ The current version does not include:
 - device-count enforcement
 - a formal database schema file or migration runner
 - complex grading rules
-
